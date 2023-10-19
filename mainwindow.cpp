@@ -21,7 +21,7 @@
 #include <fstream>
 
 using namespace std;
-
+class Error;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -37,6 +37,42 @@ MainWindow::MainWindow(QWidget *parent)
        // 메뉴와 툴바 생성 함수 선언
        menuToolbarCreate();
        //Plot_graph();
+
+
+       try{
+           QVector<double> ve;
+           for(int i = 0; i < 100; i++) ve.append(0);
+           for(int i = 0; i < 30; i++) ve.append(1);
+           for(int i = 0; i < 100; i++) ve.append(0);
+
+
+           QVector<cpx> v(ve.begin(), ve.end());
+           QVector<cpx> tmp;
+           QVector<double> tmp_x;
+           QVector<double> tmp_y;
+
+           tmp = FFT_vec(ve);
+
+           for(int i = 0; i < 230; i++) {
+               cout << i << ": " << tmp[i] << endl;
+               tmp_y.append(tmp[i].real());
+           }
+
+           for(int i = 0; i < 230; i++) {
+               cout << i << ": " << tmp_y[i] << endl;
+
+           }
+
+           plot->addGraph();
+
+           plot->xAxis->setRange(-10,10);
+           plot->yAxis->setRange(-10, 10);
+           plot->graph(0)->setData(ve,tmp_y);
+           plot->replot();
+       } catch (std::out_of_range& e) {
+           std::cout << "예외 발생 ! " << e.what() << std::endl;
+         }
+
 
 }
 
@@ -99,6 +135,58 @@ void MainWindow::generate_signal(){
 
 
 }
+
+
+void MainWindow::FFT(QVector<cpx> &v, cpx w) {
+    int n = v.size();
+    if(n == 1) return;
+
+    QVector<cpx> even(n/2), odd(n/2);
+    for(int i=0; i<n; i++) {
+        if(i % 2 == 0) even[i/2] = v[i];
+        else odd[i/2] = v[i];
+    }
+
+    FFT(even, w*w);
+    FFT(odd, w*w);
+
+    cpx z(1, 0);
+    for(int i=0; i<n/2; i++) {
+        v[i] = even[i] + z*odd[i];
+        v[i + n/2] = even[i] - z*odd[i];
+
+        z *= w;
+    }
+}
+
+QVector<cpx> MainWindow::FFT_vec(QVector<double> &v) {
+    QVector<double> w(v.size());
+
+    int n = 1;
+    while(n <= v.size()) n *= 2;
+    n *= 2;
+
+    v.resize(n);
+
+    QVector<cpx> v_(n);
+    for(int i=0; i<n; i++) {
+        v_[i] = cpx(v[i], 0);
+    }
+    cpx unit(cos(2*PI/n), sin(2*PI/n));
+
+    FFT(v_, unit);
+
+    QVector<cpx> w_(n);
+    for(int i=0; i<n; i++) w_[i] = v_[i];
+
+    FFT(w_, cpx(1, 0)/unit);
+    for(int i=0; i<n; i++) w_[i] /= cpx(n, 0);
+
+
+
+    return w_;
+}
+
 
 
 

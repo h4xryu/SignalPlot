@@ -9,6 +9,10 @@
 #include "QSlider"
 #include "qcustomplot.h"
 #include <bits/stdc++.h>
+#include "iterator"
+#include <iostream>
+#include <complex>
+#include <cmath>
 
 const double PI = acos(-1);
 typedef std::complex<double> cpx;
@@ -34,10 +38,11 @@ public:
     //발생시킬 신호의 위상
     double phase = 0;
 
-    QVector<double> fft;
 
-    void FFT(QVector<cpx> &v, bool inv);
-    QVector<double> mul(QVector<double> &v, QVector<double> &u);
+
+    void FFT(QVector<cpx> &v, cpx w);
+
+    QVector<cpx> FFT_vec(QVector<double> &v);
 
     // 문자열 객체 선언
      QString str, str2, editStr;
