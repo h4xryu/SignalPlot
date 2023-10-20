@@ -17,8 +17,8 @@
 #include "iostream"
 #include "csignal"
 #include <time.h>
-#include <fftw3.h>
 #include <fstream>
+#include <QInputDialog>
 
 using namespace std;
 class Error;
@@ -29,85 +29,166 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     plot = ui->widget;
-
-    //set_reset();
-
     // 편집상자, 슬라이드바, 콤보상자를 생성하는 함수 호출
-       controlType();
-       // 메뉴와 툴바 생성 함수 선언
-       menuToolbarCreate();
-       //Plot_graph();
-
-
-       try{
-           QVector<double> ve;
-           for(int i = 0; i < 100; i++) ve.append(0);
-           for(int i = 0; i < 30; i++) ve.append(1);
-           for(int i = 0; i < 100; i++) ve.append(0);
-
-
-           QVector<cpx> v(ve.begin(), ve.end());
-           QVector<cpx> tmp;
-           QVector<double> tmp_x;
-           QVector<double> tmp_y;
-
-           tmp = FFT_vec(ve);
-
-           for(int i = 0; i < 230; i++) {
-               cout << i << ": " << tmp[i] << endl;
-               tmp_y.append(tmp[i].real());
-           }
-
-           for(int i = 0; i < 230; i++) {
-               cout << i << ": " << tmp_y[i] << endl;
-
-           }
-
-           plot->addGraph();
-
-           plot->xAxis->setRange(-10,10);
-           plot->yAxis->setRange(-10, 10);
-           plot->graph(0)->setData(ve,tmp_y);
-           plot->replot();
-       } catch (std::out_of_range& e) {
-           std::cout << "예외 발생 ! " << e.what() << std::endl;
-         }
-
+    controlType();
+    // 메뉴와 툴바 생성 함수 선언
+    menuToolbarCreate();
 
 }
 
 // 그래프 그리는 함수
-void MainWindow::Plot_graph()
+void MainWindow::Plot_sin_graph()
 {
-    // x축 y축 벡터 정의
-
-    QQueue<QVector<double>> data;
+    QPalette pal = QPalette();
+    QPen pen;
+    pal.setColor(QPalette::Window, Qt::black);
     plot->xAxis->setLabel("x");
     plot->yAxis->setLabel("y");
     plot->xAxis->setRange(-10 - scale ,10 + scale);
     plot->yAxis->setRange(-5 - scale, 5 + scale);
-
-
-    while (!data.isEmpty()){
-        cout << ">?";
-        data.append(data.dequeue());
-    }
     plot->addGraph();
-
-    //일반 신호일 경우 <- 나중에 switch case 문으로 connect 와 연결해서 번호 부여예정
-    generate_signal();
-
-
-    //wav 파일 받아서 그리기
-
-
+    generate_sin();
+    plot->xAxis->setLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setLabelColor(QColor(0,255,0,255));
+    plot->xAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setTickLabelColor(QColor(0,255,0,255));
     plot->graph(0)->setData(vec_x, vec_y);
+    plot->setBackground(QColor(0,0,0,0));
+    pen.setColor(QColor(0,255,0,255));
+    plot->setAutoFillBackground(true);
+    plot->setPalette(pal);
+    plot->graph(0)->setPen(pen);
     plot->replot();
 
 }
 
-void MainWindow::generate_signal(){
-    //페이즈는 실시간 이동
+void MainWindow::Plot_DFT(double samp_freq, int points){
+
+    QPalette pal = QPalette();
+    QPen pen;
+    pal.setColor(QPalette::Window, Qt::black);
+
+//    int i;
+//    double y;
+//    double dF = samp_freq / points;
+//    double T = 1/ samp_freq;
+//    double freq = 32000;
+
+    QVector<double> in;
+    QVector<cpx> out;
+    QVector<double> dB;
+    QVector<double> time;
+    QVector<double> ff;
+
+    generate_singlePulse(in, ff, points,samp_freq);
+    out = FFT_vec(in);
+
+    //dB
+
+    for(int i = ((points/2)-1); i>= 0; i--){
+       //dB.append(20* log(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag())));
+        dB.append(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag()));
+    }
+    for(int i = 0; i<= ((points/2)-1); i++){
+       //dB.append(20* log(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag())));
+        dB.append(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag()));
+    }
+    //for(int i = 0; i<dB.size(); i++) std::cout << "x축 : " << ff[i] << "y축 : " << dB[i] << std::endl;
+
+
+    plot->setAutoFillBackground(true);
+    plot->setPalette(pal);
+    plot->xAxis->setLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setLabelColor(QColor(0,255,0,255));
+    plot->xAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot->addGraph();
+    plot->xAxis->setLabel("x");
+    plot->yAxis->setLabel("y");
+    plot->xAxis->setRange(-50000 ,50000);
+    plot->yAxis->setRange(-2000, 0);
+    plot->setBackground(QColor(0,0,0,0));
+    pen.setColor(QColor(0,255,0,255));
+    plot->graph(0)->setPen(pen);
+    plot->graph(0)->setData(ff, dB);
+
+
+    plot->replot();
+}
+
+void MainWindow::Plot_FFT(double samp_freq, int points){
+
+    QPalette pal = QPalette();
+    QPen pen;
+    pal.setColor(QPalette::Window, Qt::black);
+
+    //double y;
+    //double dF = samp_freq / points;
+    //double T = 1/ samp_freq;
+    //double freq = 32000;
+
+    QVector<double> in;
+    QVector<cpx> out;
+    QVector<double> dB;
+    QVector<double> time;
+    QVector<double> ff;
+
+    generate_singlePulse(in, ff, points, samp_freq); //hanning window 빼와야함
+    out = FFT_vec(in);
+
+    //dB
+
+//    for(int i = 0; i<= ((points/2)-1); i++){
+//       dB.append(20* log(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag())));
+//    }
+
+    for(int i = ((points/2)-1); i> 0; i--){
+        dB.append(20*log(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag())));
+    }
+    for(int i = 0; i<= ((points/2)-1); i++){
+        dB.append(20*log(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag())));
+    }
+    for(int i = 0; i<dB.size(); i++) std::cout << "x축 : " << ff[i] << "y축 : " << dB[i] << std::endl;
+
+    //최대 최소값 구하기
+
+    double ff_max = *max_element(ff.begin(), ff.end());
+    double ff_min = *min_element(ff.begin(), ff.end());
+
+    double dB_max = *max_element(dB.begin(), dB.end());
+    double dB_min = *min_element(dB.begin(), dB.end());
+
+    plot->setAutoFillBackground(true);
+    plot->setPalette(pal);
+    plot->xAxis->setLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setLabelColor(QColor(0,255,0,255));
+    plot->xAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot->addGraph();
+    plot->xAxis->setLabel("x");
+    plot->yAxis->setLabel("y");
+    plot->xAxis->setRange(ff_min - 100 - scale,ff_max + 100 + scale);
+    plot->yAxis->setRange(dB_min - 100 - scale, dB_max + 100 + scale);
+    plot->setBackground(QColor(0,0,0,0));
+    plot->graph(0)->setData(ff, dB);
+    pen.setColor(QColor(0,255,0,255));
+    plot->graph(0)->setPen(pen);
+
+    plot->replot();
+}
+
+
+void MainWindow::Input_dialog(){
+    bool ok = false;
+    double d = QInputDialog::getDouble(this, tr("Generating signal"),
+                                   tr("samp_rate:"), 32000, -128000, 128000, 1, &ok);
+    std::cout << "ok check" << ok;
+    if (ok)
+          Plot_FFT(d,15000);
+}
+
+void MainWindow::generate_sin(){
+
     double neg_w = phase;
     double w = phase;
 
@@ -122,20 +203,53 @@ void MainWindow::generate_signal(){
         w = w+ 0.005729;
     }
 
-    //푸리에 변환 실험
-    /**
-
-    QVector<double> vec_exp;
-
-    for (int i = 0; i < 100000 + (int)phase; i = i +1){
-        vec_exp.append(sin(w)cos(w))
-        w = w + 0.005729;
-    }
-    **/
-
-
 }
 
+void MainWindow::generate_singlePulse(QVector<double> &in, QVector<double> &ff, int points, double samp_freq){
+    for (int i = 0; i <100; i++){
+        double mul = 0.5*(1-cos(2*PI*i/(points-1)));
+
+        in.append(mul * 0);
+    }
+    for (int i = 100; i <150; i++){
+        double mul = 0.5*(1-cos(2*PI*i/(points-1)));
+        in.append(mul *1);
+    }
+    for (int i = 150; i <points; i++){
+        double mul = 0.5*(1-cos(2*PI*i/(points-1)));
+        in.append(mul * 0);
+    }
+
+    for(int i = -((points/2)-1); i<0; i++){
+        ff.append((samp_freq * i) / points);
+    }
+    for(int i = 0; i<=((points/2)-1); i++){
+        ff.append((samp_freq * i) / points);
+    }
+}
+
+void MainWindow::Plot_Wave(double samp_freq, int points){
+    //pass
+}
+
+
+QVector<cpx> MainWindow::DFT_vec(QVector<double> &v) {
+
+    int N = v.size();
+    cpx imag(0,1);
+    QVector<cpx> result;
+
+    for (int i= 0; i < N; ++i){
+        cpx tmp(0,0);
+
+        for (int j = 0; j < N; ++j){
+            tmp += v.at(j) * exp(-2*PI*i*j*imag/(double)N);
+        }
+        result.append(tmp);
+    }
+
+    return result;
+}
 
 void MainWindow::FFT(QVector<cpx> &v, cpx w) {
     int n = v.size();
@@ -164,7 +278,6 @@ QVector<cpx> MainWindow::FFT_vec(QVector<double> &v) {
 
     int n = 1;
     while(n <= v.size()) n *= 2;
-    n *= 2;
 
     v.resize(n);
 
@@ -172,22 +285,13 @@ QVector<cpx> MainWindow::FFT_vec(QVector<double> &v) {
     for(int i=0; i<n; i++) {
         v_[i] = cpx(v[i], 0);
     }
-    cpx unit(cos(2*PI/n), sin(2*PI/n));
+    cpx unit(cos(2*PI/n), -sin(2*PI/n));
 
     FFT(v_, unit);
 
-    QVector<cpx> w_(n);
-    for(int i=0; i<n; i++) w_[i] = v_[i];
 
-    FFT(w_, cpx(1, 0)/unit);
-    for(int i=0; i<n; i++) w_[i] /= cpx(n, 0);
-
-
-
-    return w_;
+    return v_;
 }
-
-
 
 
 void MainWindow::controlType()
@@ -215,13 +319,13 @@ void MainWindow::Main_Slider(int value)
     // 위상 조정
     scale = (double)sliderValue;
 
-    set_reset();
-    plot->replot();
-    Plot_graph();
+//    set_reset();
+//    plot->replot();
+//    Plot_sin_graph();
 }
 
 
-void MainWindow::set_reset(){
+void MainWindow::set_reset(){ //인자로 벡터 받자.
     vec_x.clear();
     vec_y.clear();
 }
@@ -241,7 +345,12 @@ void MainWindow::menuToolbarCreate()
         pSlotfgColor->setShortcut(tr("Alt+C"));
         pSlotfgColor->setStatusTip(tr("그래프를 시작합니다."));
         //  연결 함수 -> 그래프 그리기 시작
-        connect(pSlotfgColor, SIGNAL(triggered()), this, SLOT(Plot_graph()));
+
+
+//        connect(pSlotfgColor, SIGNAL(triggered()), this, SLOT(Plot_sin_graph()));
+        connect(pSlotfgColor, SIGNAL(triggered()), this, SLOT(Input_dialog()));
+
+
         // 메뉴바에 "그래프 시작 추가
         pGraphMenu->addAction(pSlotfgColor);
         // 툴바에 색상 아이콘 추가
