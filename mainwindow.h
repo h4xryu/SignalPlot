@@ -39,10 +39,11 @@ public:
     double phase = 0;
 
 
-
+    // 푸리에 변환 관련
     void FFT(QVector<cpx> &v, cpx w);
-
+    QVector<cpx> DFT_vec(QVector<double> &v);
     QVector<cpx> FFT_vec(QVector<double> &v);
+
 
     // 문자열 객체 선언
      QString str, str2, editStr;
@@ -81,7 +82,8 @@ public:
      // 그리기 함수 선언
      int draw(QPainter *painter, const QPoint &pos);
      //일반신호발생 함수
-     void generate_signal();
+     void generate_sin();
+     void generate_singlePulse(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
      void set_reset();
 
     ~MainWindow();
@@ -106,7 +108,11 @@ private:
 //슬롯 함수들
 private slots:
      void Main_Slider(int value);
-     void Plot_graph();
+     void Plot_sin_graph();
+     void Plot_DFT(double samp_freq, int points);
+     void Plot_FFT(double samp_freq, int points);
+     void Plot_Wave(double samp_freq, int points);
+     void Input_dialog();
 
 protected:
     // 마우스 드래그 이벤트 함수 선언
