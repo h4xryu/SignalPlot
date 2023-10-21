@@ -181,7 +181,7 @@ void MainWindow::Plot_FFT(double samp_freq, int points){
 void MainWindow::Input_dialog(){
     bool ok = false;
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
-                                   tr("samp_rate:"), 32000, -128000, 128000, 1, &ok);
+                                   tr("samp_rate:"), 320000, -1280000, 1280000, 1, &ok);
     std::cout << "ok check" << ok;
     if (ok)
           Plot_FFT(d,15000);
