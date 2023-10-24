@@ -3,12 +3,16 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 TARGET = qcustomplot
-TEMPLATE = app
+TEMPLATE += app
 
 CONFIG += c++11
 PKGCONFIG += opencv4
-INCLUDEPATH += /usr/include/opencv4
+INCLUDEPATH += /usr/include/opencv4 \
+/home/qtgraph/eigen3 \
+
+
 LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_imgcodecs
+
 
 
 # You can make your code fail to compile if it uses deprecated APIs.
@@ -21,9 +25,14 @@ SOURCES += \
     qcustomplot.cpp
 
 HEADERS += \
+    Qthreads.h \
     mainwindow.h \
-    qcustomplot.h
+    qcustomplot.h \
+    librosa.h \
+
 
 FORMS += \
     mainwindow.ui
+
+
 

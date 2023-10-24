@@ -13,12 +13,13 @@
 #include <iostream>
 #include <complex>
 #include <cmath>
+//#include <Qthreads.h>
 
 const double PI = acos(-1);
 typedef std::complex<double> cpx;
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui { class MainWindow;}
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -34,9 +35,14 @@ public:
     QVector<double> vec_x,vec_y;
     QVector<double> mul_x;
     QQueue<QVector<double>> data;
+    QVector<double> time;
     double scale;
     //발생시킬 신호의 위상
     double phase = 0;
+    //슬라이더 전용 변수
+    int _scale;
+    int get_scale();
+    QVector<double> amp;
 
 
     // 푸리에 변환 관련
@@ -82,9 +88,14 @@ public:
      // 그리기 함수 선언
      int draw(QPainter *painter, const QPoint &pos);
      //일반신호발생 함수
-     void generate_sin();
+     void generate_sin(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
      void generate_singlePulse(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
      void set_reset();
+     void generate_random_signal(QVector<double> &in, QVector<double> &ff, int points, double samp_freq, double time);
+     void generate_triwave(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
+     void generate_step_func(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
+     void generate_reLU_func(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
+
 
     ~MainWindow();
 
@@ -111,7 +122,7 @@ private slots:
      void Plot_sin_graph();
      void Plot_DFT(double samp_freq, int points);
      void Plot_FFT(double samp_freq, int points);
-     void Plot_Wave(double samp_freq, int points);
+     //void Plot_Wave(double samp_freq, int points);
      void Input_dialog();
 
 protected:
