@@ -19,7 +19,7 @@ const double PI = acos(-1);
 typedef std::complex<double> cpx;
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow;}
+namespace Ui { class MainWindow; class Qthreads;}
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -45,11 +45,19 @@ public:
     QVector<double> amp;
 
 
+
+
     // 푸리에 변환 관련
     void FFT(QVector<cpx> &v, cpx w);
     QVector<cpx> DFT_vec(QVector<double> &v);
     QVector<cpx> FFT_vec(QVector<double> &v);
-
+    QTimer *timer;
+    QVector<double> in;
+    QVector<cpx> out;
+    QVector<double> dB;
+    QVector<double> ff;
+    double samp_freq;
+    int points = 10000;
 
     // 문자열 객체 선언
      QString str, str2, editStr;
@@ -97,7 +105,13 @@ public:
      void generate_reLU_func(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
 
 
+
     ~MainWindow();
+
+signals:
+     QVector<double> get_in();
+     QVector<double> get_out();
+
 
 private:
     Ui::MainWindow *ui;
@@ -115,15 +129,27 @@ private:
       // 마우스 이벤트 처리 함수 선언
      int onMouseEvent(const QPoint &pos);
 
-
+signals:
+     void btn_triggered(bool b);
+     void send_wait();
+     void send_continue();
 //슬롯 함수들
-private slots:
+public slots:
      void Main_Slider(int value);
      void Plot_sin_graph();
      void Plot_DFT(double samp_freq, int points);
-     void Plot_FFT(double samp_freq, int points);
+     void Plot_FFT(double i,double f);
      //void Plot_Wave(double samp_freq, int points);
      void Input_dialog();
+
+     void get_i(double i){
+         std::cout << i ;
+         in.append(i);
+     }
+     void get_f(double f){
+         ff.append(f);
+     }
+     void update_graph(QVector<double>ff, QVector<double> dB);
 
 protected:
     // 마우스 드래그 이벤트 함수 선언

@@ -26,16 +26,18 @@
 
 
 
+
 using namespace std;
 
 class Error;
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
 
-
+    timer = new QTimer(this);
     ui->setupUi(this);
     plot = ui->widget;
 
@@ -84,13 +86,45 @@ void MainWindow::Plot_timeGraph(double samp_freq, int points){
      plot->xAxis->setRange(0, t_);
      plot->yAxis->setRange(100 + scale, 100 - scale);
 }*/
+void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
+    //최대 최소값 구하기
 
-void MainWindow::Plot_FFT(double samp_freq, int points){
+    double ff_max = *max_element(ff.begin(), ff.end());
+    double ff_min = *min_element(ff.begin(), ff.end());
 
+    double dB_max = *max_element(dB.begin(), dB.end());
+    double dB_min = *min_element(dB.begin(), dB.end());
+    plot->xAxis->setRange(ff_min - 100 + scale,ff_max + 100 - scale);
+    plot->yAxis->setRange(dB_min - 100 + scale, dB_max + 100 - scale);
+
+
+
+    //plot->graph(0)->setData(time, in);
+    plot->graph(0)->setData(ff, dB);
+
+
+
+    plot->replot();
+}
+void MainWindow::Plot_FFT(double i, double f){
     //그래프 색
     QPalette pal = QPalette();
     QPen pen;
     pal.setColor(QPalette::Window, Qt::black);
+    pen.setColor(QColor(0,255,0,255));
+
+    plot->setAutoFillBackground(true);
+    plot->setPalette(pal);
+
+    plot->xAxis->setLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setLabelColor(QColor(0,255,0,255));
+    plot->xAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot->yAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot->addGraph();
+    plot->xAxis->setLabel("x");
+    plot->yAxis->setLabel("y");
+    plot->graph(0)->setPen(pen);
+    plot->setBackground(QColor(0,0,0,0));
 
 
     /*------신호 세팅 부분 ------*/
@@ -118,92 +152,160 @@ void MainWindow::Plot_FFT(double samp_freq, int points){
 
 
 
-    QVector<double> in;
-    QVector<cpx> out;
-    QVector<double> dB;
-    QVector<double> ff;
+
 
     //신호 종류별
     //generate_singlePulse(in, ff, points, samp_freq);
     //generate_sin(in, ff, points, samp_freq);
-    generate_random_signal(in, ff, points, samp_freq,1);
+    //generate_random_signal(in, ff, points, samp_freq,1);
     //generate_triwave(in, ff, points, samp_freq);
     //generate_reLU_func(in, ff, points, samp_freq);
     //generate_step_func(in, ff, points, samp_freq);
 
 
 
-    out = FFT_vec(in);
+    in.append(i);
+    ff.append(f);
+
+    QVector<double> tmp_ff;
+    QVector<double> tmp_in;
+    QVector<double> tmp_dB;
+    QVector<cpx> tmp_out;
+
+
+    emit send_wait();
+    if(ff.size() < points) {
+        //샘플링 주파수는 그대로
+        for(int i = -((points/2)-1); i<0; i++){
+            tmp_ff.append((samp_freq * i) / points);
+        }
+        for(int i = 0; i<=((points/2)-1); i++){
+            tmp_ff.append((samp_freq * i) / points);
+        }
+
+    }
+    if(in.size() < points -1){
+        // 음수 부분
+        for (int i = in.size(); i < points/2 - in.size() -1; i++){
+            tmp_in.append(0);
+        }
+        for (int i = 0; i < in.size(); i++){
+            tmp_in.append(in[in.size() - i -1]);
+        }
+
+
+        // 양수 부분
+        for (int i = 0; i < in.size(); i++){
+            tmp_in.append(in[i]);
+        }
+        for (int i = ff.size(); i < points/2 - ff.size() -1; i++){
+            tmp_in.append(0);
+        }
+
+
+    }
+    tmp_out = FFT_vec(tmp_in);
+    for(int i = ((points/2)-1); i> 0; i--){
+        tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
+    }
+    for(int i = 0; i<= ((points/2)-1); i++){
+        tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
+    }
+
+
+    emit send_continue();
+    update_graph(tmp_ff, tmp_dB);
+   /* if(in.size() == 5 && ff.size() == 5){
+        QVector<double> tmp_ff;
+        QVector<double> tmp_in;
+        QVector<double> tmp_dB;
+        QVector<cpx> tmp_out;
+        int start;
+        int neg_i;
+        emit send_wait();
+        if(ff.size() < points) {
+            //샘플링 주파수는 그대로
+            for(int i = -((points/2)-1); i<0; i++){
+                tmp_ff.append((samp_freq * i) / points);
+            }
+            for(int i = 0; i<=((points/2)-1); i++){
+                tmp_ff.append((samp_freq * i) / points);
+            }
+
+        }
+        if(in.size() < points -1){
+            // 음수 부분
+            for (int i = in.size(); i < points/2 - in.size() -1; i++){
+                tmp_in.append(0);
+            }
+            for (int i = 0; i < in.size(); i++){
+                tmp_in.append(in[in.size() - i -1]);
+            }
+
+
+            // 양수 부분
+            for (int i = 0; i < in.size(); i++){
+                tmp_in.append(in[i]);
+            }
+            for (int i = ff.size(); i < points/2 - ff.size() -1; i++){
+                tmp_in.append(0);
+            }
+
+
+        }
+        tmp_out = FFT_vec(tmp_in);
+        for(int i = ((points/2)-1); i> 0; i--){
+            tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
+        }
+        for(int i = 0; i<= ((points/2)-1); i++){
+            tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
+        }
+
+
+        emit send_continue();
+        update_graph(tmp_ff, tmp_dB);
+    }*/
+
+
+
+
+    /*
+
+
 
 
     //신호의 세기
-    for(int i = ((points/2)-1); i> 0; i--){
-        dB.append(20*log(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag())));
-    }
-    for(int i = 0; i<= ((points/2)-1); i++){
-        dB.append(20*log(sqrt(out[i].real()*out[i].real() + out[i].imag()*out[i].imag())));
-    }
+
 
 
 
     //for(int i = 0; i<dB.size(); i++) std::cout << "x축 : " << ff[i] << "y축 : " << dB[i] << std::endl;
 
-    //최대 최소값 구하기
-
-    double ff_max = *max_element(ff.begin(), ff.end());
-    double ff_min = *min_element(ff.begin(), ff.end());
-
-    double dB_max = *max_element(dB.begin(), dB.end());
-    double dB_min = *min_element(dB.begin(), dB.end());
-
-
-
-
-
 
     //scale = get_scale();
 
-    plot->xAxis->setRange(ff_min - 100 + scale,ff_max + 100 - scale);
-    plot->yAxis->setRange(dB_min - 100 + scale, dB_max + 100 - scale);
 
 
 
-
-    plot->setAutoFillBackground(true);
-    plot->setPalette(pal);
-    plot->xAxis->setLabelColor(QColor(0,255,0,255));
-    plot->yAxis->setLabelColor(QColor(0,255,0,255));
-    plot->xAxis->setTickLabelColor(QColor(0,255,0,255));
-    plot->yAxis->setTickLabelColor(QColor(0,255,0,255));
-    plot->addGraph();
-    plot->xAxis->setLabel("x");
-    plot->yAxis->setLabel("y");
-
-    plot->setBackground(QColor(0,0,0,0));
-
-    plot->graph(0)->setData(time, in);
-    plot->graph(0)->setData(ff, dB);
-
-    pen.setColor(QColor(0,255,0,255));
-    plot->graph(0)->setPen(pen);
-
-    plot->replot();
-    /*QTimer *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, );
-    timer->start(1000);*/
-
-    //QThread::msleep(500);
-
+    //QThread::msleep(500);*/
 }
+
 
 
 void MainWindow::Input_dialog(){
     bool ok = false;
+    double i = 0;
+    double f = 0;
+
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
                                    tr("samp_rate:"), 4410000, -12800000, 12800000, 1, &ok);
-    std::cout << "ok check" << ok;
+    //여기서 연결
     if (ok)
-          Plot_FFT(d,15000);
+        samp_freq = d;
+        emit btn_triggered(1);
+        Plot_FFT(i, f);
+
+
 }
 
 void MainWindow::generate_sin(QVector<double> &in, QVector<double> &ff, int points, double samp_freq){
@@ -221,12 +323,7 @@ void MainWindow::generate_sin(QVector<double> &in, QVector<double> &ff, int poin
         in.append(w);
         w = w+ 0.005729;
     }
-    for(int i = -((points/2)-1); i<0; i++){
-        ff.append((samp_freq * i) / points);
-    }
-    for(int i = 0; i<=((points/2)-1); i++){
-        ff.append((samp_freq * i) / points);
-    }
+
 
 }
 
@@ -450,6 +547,7 @@ void MainWindow::menuToolbarCreate()
         pSlotfgColor->setShortcut(tr("Alt+C"));
         pSlotfgColor->setStatusTip(tr("그래프를 시작합니다."));
         //  연결 함수 -> 그래프 그리기 시작
+
 
 
 //        connect(pSlotfgColor, SIGNAL(triggered()), this, SLOT(Plot_sin_graph()));

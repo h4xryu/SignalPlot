@@ -2,21 +2,30 @@
 #include <iostream>
 #include <QApplication>
 #include <Qthreads.h>
+#include <QObject>
 
 
 
 int main(int argc, char *argv[])
 {
     //Qthreads plot_th;
-
-
+    qRegisterMetaType<QVector<double>>("QVector<double>");
 
     QApplication a(argc, argv);
     MainWindow w;
-    //connect(plot_th, &Qthreads::resultReady, w, &MainWindow::controlType);
-    //connect(plot_th, &Qthreads::finished, plot_th, &QObject::deleteLater);
-    //plot_th.start();
     w.show();
+    Qthreads plot_th;
+    plot_th.start();
+    QObject::connect(&w, &MainWindow::btn_triggered, &plot_th, &Qthreads::chk_trig);
+    QObject::connect(&w, &MainWindow::send_wait, &plot_th, &Qthreads::wait_on);
+    QObject::connect(&w, &MainWindow::send_continue, &plot_th, &Qthreads::wait_off);
+    QObject::connect(&plot_th, &Qthreads::send_io, &w, &MainWindow::Plot_FFT);
+
+//    QObject::connect(&plot_th, &Qthreads::send_io, &w, &MainWindow::Plot_FFT);
+    //connect(plot_th, &Qthreads::finished, plot_th, &QObject::deleteLater);
+
+
+
     return a.exec();
 }
 
