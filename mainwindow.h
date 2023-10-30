@@ -57,7 +57,7 @@ public:
     QVector<double> dB;
     QVector<double> ff;
     double samp_freq;
-    int points = 10000;
+    int points = 8192;
 
     // 문자열 객체 선언
      QString str, str2, editStr;
@@ -133,12 +133,13 @@ signals:
      void btn_triggered(bool b);
      void send_wait();
      void send_continue();
+     void set_sendFlag(bool b);
 //슬롯 함수들
 public slots:
      void Main_Slider(int value);
      void Plot_sin_graph();
      void Plot_DFT(double samp_freq, int points);
-     void Plot_FFT(double i,double f);
+     void Plot_FFT(QVector<double> i);
      //void Plot_Wave(double samp_freq, int points);
      void Input_dialog();
 
@@ -150,6 +151,9 @@ public slots:
          ff.append(f);
      }
      void update_graph(QVector<double>ff, QVector<double> dB);
+     bool is_sendfin(){
+         return 1;
+     };
 
 protected:
     // 마우스 드래그 이벤트 함수 선언

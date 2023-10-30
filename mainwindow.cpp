@@ -99,6 +99,8 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
 
 
 
+
+
     //plot->graph(0)->setData(time, in);
     plot->graph(0)->setData(ff, dB);
 
@@ -106,7 +108,7 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
 
     plot->replot();
 }
-void MainWindow::Plot_FFT(double i, double f){
+void MainWindow::Plot_FFT(QVector<double> in){
     //그래프 색
     QPalette pal = QPalette();
     QPen pen;
@@ -163,14 +165,24 @@ void MainWindow::Plot_FFT(double i, double f){
     //generate_step_func(in, ff, points, samp_freq);
 
 
+    // 데이터 받아와서 버퍼에 저장 <- 나눠야함
 
-    in.append(i);
-    ff.append(f);
+    emit set_sendFlag(1);
+    while (!is_sendfin()){
+        QThread::msleep(10);
+        QTimer* myTimer = new QTimer;
+        myTimer->start(200);
+        connect(myTimer, SIGNAL(timeout()), this, SLOT(Plot_FFT()));
+    }
+    emit set_sendFlag(0);
+
+
 
     QVector<double> tmp_ff;
     QVector<double> tmp_in;
     QVector<double> tmp_dB;
     QVector<cpx> tmp_out;
+
 
 
     emit send_wait();
@@ -215,6 +227,13 @@ void MainWindow::Plot_FFT(double i, double f){
 
     emit send_continue();
     update_graph(tmp_ff, tmp_dB);
+    tmp_dB.clear();
+
+    //if()
+
+
+
+
    /* if(in.size() == 5 && ff.size() == 5){
         QVector<double> tmp_ff;
         QVector<double> tmp_in;
@@ -294,8 +313,10 @@ void MainWindow::Plot_FFT(double i, double f){
 
 void MainWindow::Input_dialog(){
     bool ok = false;
-    double i = 0;
+    QVector<double> i;
     double f = 0;
+
+    i.append(0);
 
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
                                    tr("samp_rate:"), 4410000, -12800000, 12800000, 1, &ok);
@@ -303,7 +324,7 @@ void MainWindow::Input_dialog(){
     if (ok)
         samp_freq = d;
         emit btn_triggered(1);
-        Plot_FFT(i, f);
+        Plot_FFT(i);
 
 
 }

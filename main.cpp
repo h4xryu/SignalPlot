@@ -19,7 +19,9 @@ int main(int argc, char *argv[])
     QObject::connect(&w, &MainWindow::btn_triggered, &plot_th, &Qthreads::chk_trig);
     QObject::connect(&w, &MainWindow::send_wait, &plot_th, &Qthreads::wait_on);
     QObject::connect(&w, &MainWindow::send_continue, &plot_th, &Qthreads::wait_off);
-    QObject::connect(&plot_th, &Qthreads::send_io, &w, &MainWindow::Plot_FFT);
+    QObject::connect(&w, &MainWindow::set_sendFlag, &plot_th, &Qthreads::chk_sendFlag);
+    QObject::connect(&w, &MainWindow::is_sendfin, &plot_th, &Qthreads::fin_send);
+    QObject::connect(&plot_th, &Qthreads::send_in, &w, &MainWindow::Plot_FFT);
 
 //    QObject::connect(&plot_th, &Qthreads::send_io, &w, &MainWindow::Plot_FFT);
     //connect(plot_th, &Qthreads::finished, plot_th, &QObject::deleteLater);
