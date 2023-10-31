@@ -7,11 +7,13 @@
 
 
 
-
+class Error;
 
 class Qthreads : public QThread
 {
     Q_OBJECT
+
+
 
 public:
     //Qthreads(QObject *parent = nullptr);
@@ -43,12 +45,14 @@ public:
                 ff = (samp_freq * i) / points; //시간 맞춰야함
 //                std::cout << "in : "<< in <<std::endl;
 //
-                if(chk_sendFlag() == 1 && in.size() > 50){
+                if(chk_sendFlag() == 1 && in.size() > 1000){ // 1/441000Hz => 2.26 us * 1000 => 22.6ms가 된다.
                     send();
 //                    std::cout << "ff : "<< ff <<std::endl;
                     emit fin_send();
                     in.clear();
                 }
+
+
             }
         }
     }

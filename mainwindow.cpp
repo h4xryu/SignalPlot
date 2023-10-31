@@ -319,7 +319,7 @@ void MainWindow::Input_dialog(){
     i.append(0);
 
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
-                                   tr("samp_rate:"), 4410000, -12800000, 12800000, 1, &ok);
+                                   tr("samp_rate:"), 441000, -1280000, 1280000, 1, &ok);
     //여기서 연결
     if (ok)
         samp_freq = d;
