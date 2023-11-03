@@ -22,8 +22,9 @@ public:
     QVector<double> in;
     double ff;
     int points = 8192;
-    double samp_freq = 441000;
+    double samp_freq = 44100;
     double a;
+
     bool chk = 0;
     bool w_chk = 0;
     bool s_chk = 0;
@@ -37,18 +38,20 @@ public:
         while(!chk) chk_trig(0);
 
         //신호 발생시키고 메인 위젯에 전송
+
         if(chk & !w_chk){
-            startTimer();
-            for(int i = 0; i < points ; i = i + 1){
+
+            while(1){ //while(아두이노가 available)
                 a = (double)(rand()%1000)/200;
                 in.append(a);
-                ff = (samp_freq * i) / points; //시간 맞춰야함
+                //ff = (samp_freq * i) / points; //시간 맞춰야함
 //                std::cout << "in : "<< in <<std::endl;
 //
-                if(chk_sendFlag() == 1 && in.size() > 1000){ // 1/441000Hz => 2.26 us * 1000 => 22.6ms가 된다.
+                if(chk_sendFlag() == 1 && in.size() >= 1000){ // adc 샘플링레이트를 44100이라면 1/44100Hz => 22.6 us * 100 => 22.6ms가 된다. 아두이노가 15000이라면 15000에 맞게 수정해야한다. 33.3us
                     send();
-//                    std::cout << "ff : "<< ff <<std::endl;
-                    emit fin_send();
+
+                    emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
+
                     in.clear();
                 }
 
@@ -72,6 +75,7 @@ public:
 
 
 
+
 public slots:
     void chk_trig(bool a){
         if(a){
@@ -81,9 +85,11 @@ public slots:
     }
     void wait_on(){
         w_chk = 1;
+//        std::cout << "wait_on"<< std::endl;
     }
     void wait_off(){
         w_chk = 0;
+//        std::cout << "wait_off"<< std::endl;
     }
 
     bool chk_sendFlag(){

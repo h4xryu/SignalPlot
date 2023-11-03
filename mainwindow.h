@@ -31,6 +31,7 @@ public:
 
 
     QCustomPlot *plot;
+    QCustomPlot *plot_time;
     // x축 y축 벡터 정의
     QVector<double> vec_x,vec_y;
     QVector<double> mul_x;
@@ -151,6 +152,7 @@ public slots:
          ff.append(f);
      }
      void update_graph(QVector<double>ff, QVector<double> dB);
+     void update_time_graph(QVector<double>in);
      bool is_sendfin(){
          return 1;
      };

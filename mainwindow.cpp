@@ -39,7 +39,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     timer = new QTimer(this);
     ui->setupUi(this);
-    plot = ui->widget;
+    plot = ui->widget;//주파수영역 그래프
+    plot_time = ui->widget_2; //시간영역 그래프
 
 
 
@@ -108,8 +109,35 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
 
     plot->replot();
 }
+
+void MainWindow::update_time_graph(QVector<double> in){
+    //최대 최소값 구하기
+
+    double amp_max = *max_element(in.begin(), in.end());
+    double time_max = in.size() * (1/samp_freq) * 1000; //이미 1000개의 값을 받으므로 수치화 하려면 1000 곱해야함
+
+    QVector<double> time;
+    plot_time->xAxis->setRange(0,time_max);
+    plot_time->yAxis->setRange(0,amp_max + amp_max/10);
+
+    if (time.size() == 0) {
+        for(int i = 0; i < in.size(); i++) {
+            time.append(i * (1/samp_freq) * 1000);
+        }
+    }
+
+
+    plot_time->graph(0)->setData(time, in);
+
+
+
+
+    plot_time->replot();
+}
+
 void MainWindow::Plot_FFT(QVector<double> in){
-    //그래프 색
+
+    //그래프1 색
     QPalette pal = QPalette();
     QPen pen;
     pal.setColor(QPalette::Window, Qt::black);
@@ -123,17 +151,28 @@ void MainWindow::Plot_FFT(QVector<double> in){
     plot->xAxis->setTickLabelColor(QColor(0,255,0,255));
     plot->yAxis->setTickLabelColor(QColor(0,255,0,255));
     plot->addGraph();
-    plot->xAxis->setLabel("x");
-    plot->yAxis->setLabel("y");
+    plot->xAxis->setLabel("Frequency");
+    plot->yAxis->setLabel("dB");
     plot->graph(0)->setPen(pen);
     plot->setBackground(QColor(0,0,0,0));
 
+    //그래프2 색
+    pal.setColor(QPalette::Window, Qt::black);
+    pen.setColor(QColor(0,255,0,255));
 
-    /*------신호 세팅 부분 ------*/
-    //double y;
-    //double dF = samp_freq / points;
-    //double T = 1/ samp_freq;
-    //double freq = 32000;
+    plot_time->setAutoFillBackground(true);
+    plot_time->setPalette(pal);
+
+    plot_time->xAxis->setLabelColor(QColor(0,255,0,255));
+    plot_time->yAxis->setLabelColor(QColor(0,255,0,255));
+    plot_time->xAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot_time->yAxis->setTickLabelColor(QColor(0,255,0,255));
+    plot_time->addGraph();
+    plot_time->xAxis->setLabel("time (ms)");
+    plot_time->yAxis->setLabel("Amplitude");
+    plot_time->graph(0)->setPen(pen);
+    plot_time->setBackground(QColor(0,0,0,0));
+
 
 
     /* 아두이노 포트 혹은 네트워크 연결 되기 전까지는 모든 메뉴 아이콘 비활성화
@@ -165,13 +204,13 @@ void MainWindow::Plot_FFT(QVector<double> in){
     //generate_step_func(in, ff, points, samp_freq);
 
 
-    // 데이터 받아와서 버퍼에 저장 <- 나눠야함
+    // 데이터 받아와서 버퍼에 저장하는 개념
 
+    //데이터를 보냈는지 확인
     emit set_sendFlag(1);
     while (!is_sendfin()){
-        QThread::msleep(10);
         QTimer* myTimer = new QTimer;
-        myTimer->start(200);
+        myTimer->start(200); //아니면 기다림
         connect(myTimer, SIGNAL(timeout()), this, SLOT(Plot_FFT()));
     }
     emit set_sendFlag(0);
@@ -224,89 +263,17 @@ void MainWindow::Plot_FFT(QVector<double> in){
         tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
     }
 
+    QVector<double> in_amp = in;
+    //시간축도 그림
+    update_time_graph(in_amp);
+
 
     emit send_continue();
     update_graph(tmp_ff, tmp_dB);
     tmp_dB.clear();
 
-    //if()
 
 
-
-
-   /* if(in.size() == 5 && ff.size() == 5){
-        QVector<double> tmp_ff;
-        QVector<double> tmp_in;
-        QVector<double> tmp_dB;
-        QVector<cpx> tmp_out;
-        int start;
-        int neg_i;
-        emit send_wait();
-        if(ff.size() < points) {
-            //샘플링 주파수는 그대로
-            for(int i = -((points/2)-1); i<0; i++){
-                tmp_ff.append((samp_freq * i) / points);
-            }
-            for(int i = 0; i<=((points/2)-1); i++){
-                tmp_ff.append((samp_freq * i) / points);
-            }
-
-        }
-        if(in.size() < points -1){
-            // 음수 부분
-            for (int i = in.size(); i < points/2 - in.size() -1; i++){
-                tmp_in.append(0);
-            }
-            for (int i = 0; i < in.size(); i++){
-                tmp_in.append(in[in.size() - i -1]);
-            }
-
-
-            // 양수 부분
-            for (int i = 0; i < in.size(); i++){
-                tmp_in.append(in[i]);
-            }
-            for (int i = ff.size(); i < points/2 - ff.size() -1; i++){
-                tmp_in.append(0);
-            }
-
-
-        }
-        tmp_out = FFT_vec(tmp_in);
-        for(int i = ((points/2)-1); i> 0; i--){
-            tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
-        }
-        for(int i = 0; i<= ((points/2)-1); i++){
-            tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
-        }
-
-
-        emit send_continue();
-        update_graph(tmp_ff, tmp_dB);
-    }*/
-
-
-
-
-    /*
-
-
-
-
-    //신호의 세기
-
-
-
-
-    //for(int i = 0; i<dB.size(); i++) std::cout << "x축 : " << ff[i] << "y축 : " << dB[i] << std::endl;
-
-
-    //scale = get_scale();
-
-
-
-
-    //QThread::msleep(500);*/
 }
 
 
@@ -314,12 +281,12 @@ void MainWindow::Plot_FFT(QVector<double> in){
 void MainWindow::Input_dialog(){
     bool ok = false;
     QVector<double> i;
-    double f = 0;
+
 
     i.append(0);
 
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
-                                   tr("samp_rate:"), 441000, -1280000, 1280000, 1, &ok);
+                                   tr("samp_rate:"), 30000, -128000, 128000, 1, &ok);
     //여기서 연결
     if (ok)
         samp_freq = d;
