@@ -42,14 +42,10 @@ MainWindow::MainWindow(QWidget *parent)
     plot = ui->widget;//주파수영역 그래프
     plot_time = ui->widget_2; //시간영역 그래프
 
-
-
     // 편집상자, 슬라이드바, 콤보상자를 생성하는 함수 호출
     controlType();
     // 메뉴와 툴바 생성 함수 선언
     menuToolbarCreate();
-
-
 
 
 }
@@ -80,13 +76,6 @@ void MainWindow::Plot_sin_graph()
 
 }
 
-/*
-void MainWindow::Plot_timeGraph(double samp_freq, int points){
-     generate_random_signal(in, ff, points, samp_freq,1);
-     double t_ = *max_element(time.begin(), time.end());
-     plot->xAxis->setRange(0, t_);
-     plot->yAxis->setRange(100 + scale, 100 - scale);
-}*/
 void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
     //최대 최소값 구하기
 
@@ -96,15 +85,9 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
     double dB_max = *max_element(dB.begin(), dB.end());
     double dB_min = *min_element(dB.begin(), dB.end());
     plot->xAxis->setRange(ff_min - 100 + scale,ff_max + 100 - scale);
-    plot->yAxis->setRange(dB_min - 100 + scale, dB_max + 100 - scale);
+    plot->yAxis->setRange(-dB_max - 75 + scale, dB_max + 100 - scale);
 
-
-
-
-
-    //plot->graph(0)->setData(time, in);
     plot->graph(0)->setData(ff, dB);
-
 
 
     plot->replot();
@@ -118,7 +101,7 @@ void MainWindow::update_time_graph(QVector<double> in){
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(0,amp_max + amp_max/10);
+    plot_time->yAxis->setRange(-amp_max,2*amp_max);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
