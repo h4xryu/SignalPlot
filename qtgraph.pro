@@ -1,11 +1,14 @@
-QT       += core gui
+QT       += core gui \
+serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 TARGET = qcustomplot
 TEMPLATE += app
 
-CONFIG += c++11
+CONFIG += c++11 \
+serialport
+
 PKGCONFIG += opencv4
 INCLUDEPATH += /usr/include/opencv4 \
 /home/qtgraph/eigen3 \
@@ -25,10 +28,9 @@ SOURCES += \
     qcustomplot.cpp
 
 HEADERS += \
-    Qthreads.h \
     mainwindow.h \
+    micThread.h \
     qcustomplot.h \
-    librosa.h \
 
 
 FORMS += \

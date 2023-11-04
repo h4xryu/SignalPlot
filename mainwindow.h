@@ -13,7 +13,8 @@
 #include <iostream>
 #include <complex>
 #include <cmath>
-//#include <Qthreads.h>
+#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
 
 const double PI = acos(-1);
 typedef std::complex<double> cpx;
@@ -106,6 +107,9 @@ public:
      void generate_reLU_func(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
 
 
+     QString portName;
+     QByteArray ba;
+     const char *device;
 
     ~MainWindow();
 
@@ -116,6 +120,10 @@ signals:
 
 private:
     Ui::MainWindow *ui;
+
+    void fillPortsInfo();
+    QSerialPort* m_serialPort = nullptr;
+
       // 도형 콤보상자 항목 선택시 처리 함수 선언
      void Main_comboBox(int index);
       // 라인 스타일 콤보상자 항목 선택시 처리 함수 선언
@@ -135,6 +143,7 @@ signals:
      void send_wait();
      void send_continue();
      void set_sendFlag(bool b);
+     void sendDeviceInfo(const char *device);
 //슬롯 함수들
 public slots:
      void Main_Slider(int value);
@@ -156,6 +165,13 @@ public slots:
      bool is_sendfin(){
          return 1;
      };
+
+     //시리얼 관련
+     int readData();
+     void handleError(QSerialPort::SerialPortError error);
+     void on_btnConnect_clicked();
+     void on_btnDisConnect_clicked();
+
 
 protected:
     // 마우스 드래그 이벤트 함수 선언
