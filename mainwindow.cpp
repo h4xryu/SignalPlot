@@ -22,10 +22,6 @@
 #include <librosa.h>
 #include <QTimer>
 #include <QThread>
-#include <fcntl.h>
-#include <errno.h>
-#include <ctype.h>
-#include <termios.h>
 #include <micThread.h>
 
 
@@ -39,22 +35,42 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_serialPort(new QSerialPort(this))
+    , mic(new MicThread)
 {
 
     timer = new QTimer(this);
     ui->setupUi(this);
 
-    fillPortsInfo();
+    mic->start();
+    device = (char*)malloc(sizeof(char)*20);
+    ui->btnDisConnect->setEnabled(false);
 
+    QObject::connect(this, &MainWindow::btn_triggered, mic, &MicThread::chk_trig);
+    QObject::connect(this, &MainWindow::send_wait, mic, &MicThread::wait_on);
+    QObject::connect(this, &MainWindow::send_continue, mic, &MicThread::wait_off);
+    QObject::connect(this, &MainWindow::set_sendFlag, mic, &MicThread::chk_sendFlag);
+    QObject::connect(this, &MainWindow::is_sendfin, mic, &MicThread::fin_send);
+    QObject::connect(mic, &MicThread::send_in, this, &MainWindow::Plot_FFT);
+    QObject::connect(mic, &MicThread::getDeviceInfo, this, &MainWindow::sendDeviceInfo);
+    QObject::connect(this, &MainWindow::sendDinfoReady, mic, &MicThread::chk_gotdev);
+
+
+
+    fillPortsInfo();
+    connect(ui->btnConnect, SIGNAL(clicked), SLOT(on_btnConnect_clicked));
     connect(m_serialPort, &QSerialPort::readyRead, this, &MainWindow::readData);
-    connect(m_serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
+    //connect(m_serialPort, &QSerialPort::errorOccurred, this, &MainWindow::handleError);
     plot = ui->widget;//주파수영역 그래프
     plot_time = ui->widget_2; //시간영역 그래프
 
+    plot_time->hide();
+    plot->hide();
+
     // 편집상자, 슬라이드바, 콤보상자를 생성하는 함수 호출
-    controlType();
+    //controlType();
     // 메뉴와 툴바 생성 함수 선언
     menuToolbarCreate();
+    graphStartBtn->setEnabled(false);
 
 
 }
@@ -106,15 +122,15 @@ void MainWindow::update_time_graph(QVector<double> in){
     //최대 최소값 구하기
 
     double amp_max = *max_element(in.begin(), in.end());
-    double time_max = in.size() * (1/samp_freq) * 1000; //이미 1000개의 값을 받으므로 수치화 하려면 1000 곱해야함
+    double time_max = in.size() * (1/samp_freq) * 200; //200개의 값을 받으므로 수치화 하려면 200 곱해야함
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(-amp_max,2*amp_max);
+    plot_time->yAxis->setRange(-2*amp_max,2*amp_max);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
-            time.append(i * (1/samp_freq) * 1000);
+            time.append(i * (1/samp_freq) * 200);
         }
     }
 
@@ -248,7 +264,10 @@ void MainWindow::Plot_FFT(QVector<double> in){
 
     }
     tmp_out = FFT_vec(tmp_in);
-    for(int i = ((points/2)-1); i> 0; i--){
+//    for(int i = (points)-1; i> (points/2)-1; i--){
+//        tmp_dB.append(20*log(sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag())));
+//    }
+    for(int i = (points/2)-1; i> 0; i--){
         tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
     }
     for(int i = 0; i<= ((points/2)-1); i++){
@@ -519,28 +538,29 @@ void MainWindow::menuToolbarCreate()
         // 툴바에 도형 추가
         GraphToolBar = addToolBar(tr("Graph"));
         // "시작" 아이콘 설정
-        const QIcon fgcolorIcon = QIcon::fromTheme("start", QIcon("D:/Work/QT Creator/Controls/color2.bmp"));
+        const QIcon graphIcon = QIcon::fromTheme("start", QIcon("D:/Work/QT Creator/Controls/color2.bmp"));
         // 시작 객체 생성
-        QAction *pSlotfgColor = new QAction(fgcolorIcon, tr("&Graph start"), this);
+        graphStartBtn = new QAction(graphIcon, tr("&Graph start"), this);
 
 
-        pSlotfgColor->setShortcut(tr("Alt+C"));
-        pSlotfgColor->setStatusTip(tr("그래프를 시작합니다."));
+        graphStartBtn->setShortcut(tr("Alt+C"));
+        graphStartBtn->setStatusTip(tr("그래프를 시작합니다."));
         //  연결 함수 -> 그래프 그리기 시작
 
 
 
 //        connect(pSlotfgColor, SIGNAL(triggered()), this, SLOT(Plot_sin_graph()));
-        connect(pSlotfgColor, SIGNAL(triggered()), this, SLOT(Input_dialog()));
+        connect(graphStartBtn, SIGNAL(triggered()), this, SLOT(Input_dialog()));
 
 
         // 메뉴바에 "그래프 시작 추가
-        pGraphMenu->addAction(pSlotfgColor);
+        pGraphMenu->addAction(graphStartBtn);
         // 툴바에 색상 아이콘 추가
-        GraphToolBar->addAction(pSlotfgColor);
+        GraphToolBar->addAction(graphStartBtn);
 
         // 상태바을 연결시킨다.
         pStartusbar = statusBar();
+
 }
 
 
@@ -616,30 +636,45 @@ void MainWindow::fillPortsInfo()
 
 void MainWindow::on_btnConnect_clicked()
 {
+
     // 시리얼 설정 코드
-    m_serialPort->setPortName(ui->comboBox->currentText()); // 포트 이름 지정
-    m_serialPort->setBaudRate(QSerialPort::Baud115200); // baud: 초당 신호(siganl) 요소의 수 , 예) 하나의 버드에 2bit 있다면 1Baud 동안 2bit 전송 됨
-    m_serialPort->setDataBits(QSerialPort::Data8); // dataBits
-    m_serialPort->setParity(QSerialPort::NoParity); // 정보 전달 과정에 오류가 생겼는지 검사하기 위한 것
-    m_serialPort->setStopBits(QSerialPort::OneStop); // 포트를 열기전에 set 또는 success 하면 return true로 반환된다.
-    m_serialPort->setFlowControl(QSerialPort::NoFlowControl); // 흐름제어
+
+    //m_serialPort->setPortName(ui->comboBox->currentText()); // 포트 이름 지정
+    //m_serialPort->setBaudRate(QSerialPort::Baud115200); // baud: 초당 신호(siganl) 요소의 수 , 예) 하나의 버드에 2bit 있다면 1Baud 동안 2bit 전송 됨
+    //m_serialPort->setDataBits(QSerialPort::Data8); // dataBits
+    //m_serialPort->setParity(QSerialPort::NoParity); // 정보 전달 과정에 오류가 생겼는지 검사하기 위한 것
+    //m_serialPort->setStopBits(QSerialPort::OneStop); // 포트를 열기전에 set 또는 success 하면 return true로 반환된다.
+    //m_serialPort->setFlowControl(QSerialPort::NoFlowControl); // 흐름제어
     portName ="/dev/" + ui->comboBox->currentText();
     ba = portName.toLocal8Bit();
     device = ba.data();
-    emit sendDeviceInfo(device);
-    readData();
+    std::cout << "send test : " << device << std::endl;
+    emit sendDinfoReady(1);
+    mic->device = device;
+    //readData();
     ui->btnConnect->setEnabled(false);
     ui->btnDisConnect->setEnabled(true);
+
+    plot_time->show();
+    plot->show();
+    graphStartBtn->setEnabled(true);
 
 
 }
 
 void MainWindow::on_btnDisConnect_clicked()
 {
+    emit send_wait();
+    fillPortsInfo();
+    mic->exit();
+    mic->start();
     if (m_serialPort->isOpen()) // 시리얼 포트 열렸으면
         m_serialPort->close(); // 시리얼 닫아라
     ui->btnConnect->setEnabled(true);
     ui->btnDisConnect->setEnabled(false);
+    plot_time->hide();
+    plot->hide();
+
 }
 
 

@@ -15,12 +15,13 @@
 #include <cmath>
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
+#include <micThread.h>
 
 const double PI = acos(-1);
 typedef std::complex<double> cpx;
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; class Qthreads;}
+namespace Ui { class MainWindow;}
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -29,7 +30,7 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
-
+    MicThread *mic;
 
     QCustomPlot *plot;
     QCustomPlot *plot_time;
@@ -45,7 +46,7 @@ public:
     int _scale;
     int get_scale();
     QVector<double> amp;
-
+    QAction *graphStartBtn;
 
 
 
@@ -109,7 +110,7 @@ public:
 
      QString portName;
      QByteArray ba;
-     const char *device;
+     char *device;
 
     ~MainWindow();
 
@@ -143,7 +144,8 @@ signals:
      void send_wait();
      void send_continue();
      void set_sendFlag(bool b);
-     void sendDeviceInfo(const char *device);
+     void sendDeviceInfo(char *device);
+     void sendDinfoReady(bool b);
 //슬롯 함수들
 public slots:
      void Main_Slider(int value);

@@ -2,29 +2,17 @@
 #define MICTHREAD_H
 #include <fcntl.h>
 #include <errno.h>
-#include <termios.h>
-#include <unistd.h>
 #include <iostream>
 #include <string.h>
 #include <ctype.h>
-#include <vector>
+#include <QVector>
 #include <QThread>
-#include <mainwindow.h>
 #include <QTimer>
 #include <QObject>
-#include <QtSerialPort/QSerialPort>
-#include <QtSerialPort/QSerialPortInfo>
-#include <fcntl.h>
-#include <errno.h>
 #include <termios.h>
 #include <unistd.h>
-#include <iostream>
-#include <string.h>
-#include <ctype.h>
-#include <vector>
 
 
-class Error;
 
 class MicThread : public QThread
 {
@@ -33,69 +21,35 @@ class MicThread : public QThread
 
 
 public:
+    bool chk_dinfo = 0;
     double ff;
     double a;
     bool chk = 0;
     bool w_chk = 0;
     bool s_chk = 0;
     QVector<double> in;
-    const char* device;
+    char* device = nullptr;
     void run() override{
-        getDeviceInfo(device);
+
         connect_serial();
     }
 
-
-
-    bool isRunning();
-    bool isFinished();
-    bool wait(QDeadlineTimer deadline = QDeadlineTimer(QDeadlineTimer::Forever));
-    bool wait(unsigned long time);
-
-
-
-
-public slots:
-
-    void getDeviceInfo(const char* dev){
-        device = dev;
-    }
-
-    void chk_trig(bool a){
-        if(a){
-            std::cout << "checked";
-            chk = 1;
-        }
-    }
-    void wait_on(){
-        w_chk = 1;
-        std::cout << "wait_on"<< std::endl;
-    }
-    void wait_off(){
-        w_chk = 0;
-        std::cout << "wait_off"<< std::endl;
-    }
-
-    bool chk_sendFlag(){
-        if(a){
-            s_chk = 1;
-            return 1;
-        } else {
-            chk = 0;
-            return 0;
-        }
-    }
-
-
-
-signals:
-    void send_in(QVector<double> in);
-    void send_f(double f);
-    void resultReady(const QString &s);
-    void fin_send();
-    void send(QVector<double> results);
     int connect_serial(){
         unsigned char buffer[100];
+        std::cout << "Waiting for device..."<< std::endl;
+
+        while(!chk_dinfo) chk_gotdev(0);
+
+        //getDeviceInfo(device);
+        std::cout << "Port name : " << device << std::endl;
+        if (device == NULL) {
+            printf("Port error\n");
+            return 1;
+
+        }
+        std::string str = device;
+        std::system(("echo \"20181657\" | sudo -S chmod 777 "+str+"").c_str());
+
 
         int fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY);
 
@@ -103,7 +57,7 @@ signals:
             // O_NOCTTY : ctrl + c 무시
             if (fd == -1) {
                 fprintf(stderr, "open(%s): %s\n", device, strerror(errno));
-
+                getDeviceInfo(device);
             }
 
             struct termios tty;
@@ -168,10 +122,13 @@ signals:
 
                 if (num_bytes > 0) {
                     for (ssize_t i = 0; i < num_bytes; ++i) {
-                        if (chk_sendFlag() == 1 && in.size() >= 1000){
+
+                        while(!s_chk) chk_sendFlag(0);
+                        if (in.size() >= 200){
                             emit send_in(in);
                             emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
                             in.clear();
+                            s_chk = 0;
                         }
 
                         if (buffer[i] == '@'){
@@ -181,8 +138,8 @@ signals:
                         }
 
                         if (buffer[i] == '#' && stx){
-                            std::cout << stoi(tmp);
-                            in.append(stoi(tmp)); //여기서 중요함
+                            //std::cout << stoi(tmp);
+                            in.append(330-stoi(tmp)); //여기서 중요함
                             stx = false;
                             tmp.clear();
                             isfull = false;
@@ -204,7 +161,66 @@ signals:
             }
     }}
 
+
+
+    bool isRunning();
+    bool isFinished();
+    bool wait(QDeadlineTimer deadline = QDeadlineTimer(QDeadlineTimer::Forever));
+    bool wait(unsigned long time);
+
+
+
+
+public slots:
+
+    void getDeviceInfo(char* dev){
+        device = dev;
+    }
+    void chk_gotdev(bool a){
+        if(a) {
+            chk_dinfo = 1;
+        }
+
+    }
+
+    void chk_trig(bool a){
+        if(a){
+            std::cout << "checked";
+            chk = 1;
+        }
+    }
+    void wait_on(){
+        w_chk = 1;
+        std::cout << "wait_on"<< std::endl;
+    }
+    void wait_off(){
+        w_chk = 0;
+        std::cout << "wait_off"<< std::endl;
+    }
+
+    bool chk_sendFlag(bool a){
+        if(a){
+            s_chk = 1;
+            return 1;
+        } else {
+            chk = 0;
+            return 0;
+        }
+    }
+
+
+
+signals:
+    void send_in(QVector<double> in);
+    void send_f(double f);
+    void resultReady(const QString &s);
+    void fin_send();
+    void send(QVector<double> results);
+
+
 };
+
+
 
 
 

@@ -1,7 +1,7 @@
 QT       += core gui \
 serialport
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport serialport
 
 TARGET = qcustomplot
 TEMPLATE += app
@@ -25,12 +25,13 @@ LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_imgcodecs
 SOURCES += \
     main.cpp \
     mainwindow.cpp\
-    qcustomplot.cpp
+    qcustomplot.cpp\
 
 HEADERS += \
     mainwindow.h \
-    micThread.h \
     qcustomplot.h \
+    micThread.h \
+    micThread.h \
 
 
 FORMS += \
