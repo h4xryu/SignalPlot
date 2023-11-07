@@ -150,7 +150,6 @@ signals:
 public slots:
      void Main_Slider(int value);
      void Plot_sin_graph();
-     void Plot_DFT(double samp_freq, int points);
      void Plot_FFT(QVector<double> i);
      //void Plot_Wave(double samp_freq, int points);
      void Input_dialog();

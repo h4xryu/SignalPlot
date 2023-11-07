@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 
-
+class Error;
 class MicThread : public QThread
 {
     Q_OBJECT
@@ -124,7 +124,7 @@ public:
                     for (ssize_t i = 0; i < num_bytes; ++i) {
 
                         while(!s_chk) chk_sendFlag(0);
-                        if (in.size() >= 200){
+                        if (in.size() >= 150){
                             emit send_in(in);
                             emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
                             in.clear();
@@ -139,7 +139,8 @@ public:
 
                         if (buffer[i] == '#' && stx){
                             //std::cout << stoi(tmp);
-                            in.append(330-stoi(tmp)); //여기서 중요함
+                            try{in.append(stoi(tmp));}
+                            catch(int e){}
                             stx = false;
                             tmp.clear();
                             isfull = false;
