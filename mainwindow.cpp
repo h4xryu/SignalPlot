@@ -122,15 +122,16 @@ void MainWindow::update_time_graph(QVector<double> in){
 
     double amp_max = *max_element(in.begin(), in.end());
     double amp_min = *min_element(in.begin(), in.end());
-    double time_max = in.size() * (1/samp_freq) * 125; //200개의 값을 받으므로 수치화 하려면 200 곱해야함
+    double avg = (amp_max + amp_min) /2;
+    double time_max = in.size() * (1/samp_freq) * 200; //200개의 값을 받으므로 수치화 하려면 200 곱해야함
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(amp_min - 50,amp_max+50);
+    plot_time->yAxis->setRange(amp_min - avg,amp_max + avg);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
-            time.append(i * (1/samp_freq) * 125);
+            time.append(i * (1/samp_freq) * 200);
         }
     }
 
@@ -196,6 +197,7 @@ void MainWindow::Plot_FFT(QVector<double> in){
     //데이터를 보냈는지 확인
     emit set_sendFlag(1);
     while (!is_sendfin()){
+
     }
     emit set_sendFlag(0);
 
@@ -273,7 +275,7 @@ void MainWindow::Input_dialog(){
     i.append(0);
 
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
-                                   tr("samp_rate:"), 30000, -128000, 128000, 1, &ok);
+                                   tr("samp_rate:"), 2350, -128000, 128000, 1, &ok);
     //여기서 연결
     if (ok)
         samp_freq = d;

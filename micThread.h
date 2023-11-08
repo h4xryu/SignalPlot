@@ -29,13 +29,15 @@ public:
     bool s_chk = 0;
     QVector<double> in;
     char* device = nullptr;
+    double avg = 0;
+
     void run() override{
 
         connect_serial();
     }
 
     int connect_serial(){
-        unsigned char buffer[100];
+        unsigned char buffer[200];
         std::cout << "Waiting for device..."<< std::endl;
 
         while(!chk_dinfo) chk_gotdev(0);
@@ -124,9 +126,14 @@ public:
                     for (ssize_t i = 0; i < num_bytes; ++i) {
 
                         while(!s_chk) chk_sendFlag(0);
-                        if (in.size() >= 150){
+                        if (in.size() >= 200){
+                            double amp_max = *std::max_element(in.begin(), in.end());
+                            double amp_min = *std::min_element(in.begin(), in.end());
+                            avg = (amp_max + amp_min) / 2;
+                            for(int i = 0; i < in.size(); i++) in[i] = (in[i] - avg)/10;
                             emit send_in(in);
                             emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
+
                             in.clear();
                             s_chk = 0;
                         }
