@@ -109,7 +109,7 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
     double dB_max = *max_element(dB.begin(), dB.end());
     double dB_min = *min_element(dB.begin(), dB.end());
     plot->xAxis->setRange(ff_min - 100 + scale,ff_max + 100 - scale);
-    plot->yAxis->setRange(-dB_max - 75 + scale, dB_max + 100 - scale);
+    plot->yAxis->setRange(-100 + scale, 5000 - scale);
 
     plot->graph(0)->setData(ff, dB);
 
@@ -123,15 +123,15 @@ void MainWindow::update_time_graph(QVector<double> in){
     double amp_max = *max_element(in.begin(), in.end());
     double amp_min = *min_element(in.begin(), in.end());
     double avg = (amp_max + amp_min) /2;
-    double time_max = in.size() * (1/samp_freq) * 200; //200개의 값을 받으므로 수치화 하려면 200 곱해야함
+    double time_max = in.size() * (1/samp_freq) * 425; //425개의 값을 받으므로 수치화 하려면 425 곱해야함
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(amp_min - avg,amp_max + avg);
+    plot_time->yAxis->setRange(-30, 30);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
-            time.append(i * (1/samp_freq) * 200);
+            time.append(i * (1/samp_freq) * 425);
         }
     }
 
@@ -158,7 +158,7 @@ void MainWindow::Plot_FFT(QVector<double> in){
     plot->yAxis->setTickLabelColor(QColor(0,255,0,255));
     plot->addGraph();
     plot->xAxis->setLabel("Frequency");
-    plot->yAxis->setLabel("dB");
+    plot->yAxis->setLabel("y");
     plot->graph(0)->setPen(pen);
     plot->setBackground(QColor(0,0,0,0));
 
@@ -242,14 +242,18 @@ void MainWindow::Plot_FFT(QVector<double> in){
 
     }
     tmp_out = FFT_vec(tmp_in);
-    for(int i = (points/2)-1; i< (points)-2; i++){
-        tmp_dB.append(20*log(sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag())));
-    }
-//    for(int i = (points/2)-1; i> 0; i--){
+//    for(int i = (points/2)-1; i< (points)-2; i++){
+//        tmp_dB.append(20*log(sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag())));
+//    }
+//    for(int i = 0; i<= ((points/2)-1); i++){
 //        tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
 //    }
+
+    for(int i = (points/2)-1; i< (points)-2; i++){
+        tmp_dB.append((0.5)*sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag()));
+    }
     for(int i = 0; i<= ((points/2)-1); i++){
-        tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
+        tmp_dB.append((0.5)*sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag()));
     }
 
     QVector<double> in_amp = in;

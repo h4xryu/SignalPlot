@@ -37,7 +37,7 @@ public:
     }
 
     int connect_serial(){
-        unsigned char buffer[200];
+        unsigned char buffer[1000];
         std::cout << "Waiting for device..."<< std::endl;
 
         while(!chk_dinfo) chk_gotdev(0);
@@ -55,7 +55,7 @@ public:
 
         int fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY);
 
-        //O_RDWR : 파일을 읽기/쓰기용으로 연다, O_NDELAY : non-blocking 입추력 옵션 읽고 쓸 데이터 없으면 -1 리턴
+        //O_RDWR : 파일을 읽기/쓰기용으로 연다, O_NDELAY : non-blocking 입출력 옵션 읽고 쓸 데이터 없으면 -1 리턴
             // O_NOCTTY : ctrl + c 무시
             if (fd == -1) {
                 fprintf(stderr, "open(%s): %s\n", device, strerror(errno));
@@ -126,11 +126,11 @@ public:
                     for (ssize_t i = 0; i < num_bytes; ++i) {
 
                         while(!s_chk) chk_sendFlag(0);
-                        if (in.size() >= 200){
+                        if (in.size() >= 425){
                             double amp_max = *std::max_element(in.begin(), in.end());
                             double amp_min = *std::min_element(in.begin(), in.end());
                             avg = (amp_max + amp_min) / 2;
-                            for(int i = 0; i < in.size(); i++) in[i] = (in[i] - avg)/10;
+                            for(int i = 0; i < in.size(); i++) in[i] = (in[i] - avg);
                             emit send_in(in);
                             emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
 
@@ -138,16 +138,16 @@ public:
                             s_chk = 0;
                         }
 
-                        if (buffer[i] == '@'){
+                        if (buffer[i] == char(0x02)){
                             stx = true;
                             continue;
 
                         }
 
-                        if (buffer[i] == '#' && stx){
+                        if (buffer[i] == char(0x03) && stx){
                             //std::cout << stoi(tmp);
                             try{in.append(stoi(tmp));}
-                            catch(int e){}
+                            catch(const std::invalid_argument& e){}
                             stx = false;
                             tmp.clear();
                             isfull = false;
