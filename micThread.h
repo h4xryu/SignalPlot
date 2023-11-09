@@ -146,7 +146,7 @@ public:
 
                         if (buffer[i] == char(0x03) && stx){
                             //std::cout << stoi(tmp);
-                            try{in.append(stoi(tmp));}
+                            try{in.append(stoi(tmp)/10);} //except
                             catch(const std::invalid_argument& e){}
                             stx = false;
                             tmp.clear();

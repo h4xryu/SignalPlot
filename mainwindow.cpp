@@ -109,7 +109,7 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
     double dB_max = *max_element(dB.begin(), dB.end());
     double dB_min = *min_element(dB.begin(), dB.end());
     plot->xAxis->setRange(ff_min - 100 + scale,ff_max + 100 - scale);
-    plot->yAxis->setRange(-100 + scale, 5000 - scale);
+    plot->yAxis->setRange(-50 - scale, 1500 + scale);
 
     plot->graph(0)->setData(ff, dB);
 
@@ -127,7 +127,7 @@ void MainWindow::update_time_graph(QVector<double> in){
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(-30, 30);
+    plot_time->yAxis->setRange(-100, 100);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
@@ -221,26 +221,28 @@ void MainWindow::Plot_FFT(QVector<double> in){
         }
 
     }
-    if(in.size() < points -1){
+    if(in.size() < tmp_ff.size()){
         // 음수 부분
-        for (int i = in.size(); i < points/2 - in.size() -1; i++){
+        for (int i = in.size(); i < tmp_ff.size()/2 - (in.size()/2-1); i++){ //받은 버퍼절반의 크기 + 0의 개수 = tmp_ff의 절반 사이즈
             tmp_in.append(0);
         }
-        for (int i = 0; i < in.size(); i++){
+    }
+        for (int i = 0; i < in.size()/2-1; i++){ //받은 버퍼의 크기만큼 채움
             tmp_in.append(in[in.size() - i -1]);
         }
 
 
         // 양수 부분
-        for (int i = 0; i < in.size(); i++){
+        for (int i = 0; i < in.size()/2-1; i++){ //받은 버퍼의 절반크기만큼 채움
             tmp_in.append(in[i]);
         }
-        for (int i = ff.size(); i < points/2 - ff.size() -1; i++){
+     if(in.size() < tmp_ff.size()){
+        for (int i = in.size(); i < tmp_ff.size()/2 - (in.size()/2-1); i++){
             tmp_in.append(0);
         }
+     }
 
 
-    }
     tmp_out = FFT_vec(tmp_in);
 //    for(int i = (points/2)-1; i< (points)-2; i++){
 //        tmp_dB.append(20*log(sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag())));
@@ -250,10 +252,10 @@ void MainWindow::Plot_FFT(QVector<double> in){
 //    }
 
     for(int i = (points/2)-1; i< (points)-2; i++){
-        tmp_dB.append((0.5)*sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag()));
+        tmp_dB.append((0.5)*sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag()*(1-cos(2*PI*((points)-1-i))/(points-1))));
     }
     for(int i = 0; i<= ((points/2)-1); i++){
-        tmp_dB.append((0.5)*sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag()));
+        tmp_dB.append((0.5)*sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag()*(1-cos(2*PI*i/(points-1)))));
     }
 
     QVector<double> in_amp = in;
@@ -276,7 +278,7 @@ void MainWindow::Input_dialog(){
     QVector<double> i;
 
 
-    i.append(0);
+    for(int x = 0; x < points * 2; x++) i.append(0);
 
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
                                    tr("samp_rate:"), 2350, -128000, 128000, 1, &ok);
