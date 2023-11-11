@@ -29,7 +29,7 @@ public:
     bool s_chk = 0;
     QVector<double> in;
     char* device = nullptr;
-    double avg = 0;
+    int avg = 0;
 
     void run() override{
 
@@ -104,9 +104,7 @@ public:
 
             std::vector<double> dataBuff;
             std::string tmp;
-            int tmp2 = 0;
             bool stx = false;
-            bool isfull = false;
             bool breakPoint = false;
 
             try{
@@ -126,19 +124,14 @@ public:
                         for (ssize_t i = 0; i < num_bytes; ++i) {
 
                             while(!s_chk) chk_sendFlag(0);
-                            if (in.size() >= 300 && !(in.size() <= 10)){
-                                double amp_max = *std::max_element(in.begin(), in.end());
-                                double amp_min = *std::min_element(in.begin(), in.end());
+                            if (in.size() >= 200){
+                                int amp_max = *std::max_element(in.begin(), in.end()); //정수형으로 해야지 오버플로우 안남
+                                int amp_min = *std::min_element(in.begin(), in.end());
                                 avg = (amp_max + amp_min) / 2;
-                                for(int i = 0; i < in.size(); i++) {
-                                    if (in[i] > (avg/2)){
 
-                                       in[i] = (in[i] - avg);
-                                       //std::cout << in[i] << std::endl;
-                                    } else {
-                                        in[i] = in[i];
-                                        //std::cout << "case2 : " << in[i] << std::endl;
-                                    }
+                                for(int i = 0; i < in.size(); i++) {
+                                    in[i] = ((in[i] - avg)/10); //오버플로우 방지를 위해서 10곱했다가 10나눠줌
+                                    std::cout << "debug : " << in[i] << " avg : " << avg/10 << std::endl;
                                 };
                                 emit send_in(in);
                                 emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
@@ -155,11 +148,12 @@ public:
 
                             if (buffer[i] == char(0x03) && stx){
                                 //std::cout << stoi(tmp);
-                                try{in.append(stoi(tmp));} //except
+                                try{
+                                    if (stoi(tmp) < 200)in.append(stoi(tmp)*10); //이상한 값 들어오는 거 방지
+                                } //except
                                 catch(const std::invalid_argument& e){}
                                 stx = false;
                                 tmp.clear();
-                                isfull = false;
                                 continue;
                                 }
                             if (stx && isprint(buffer[i])) {

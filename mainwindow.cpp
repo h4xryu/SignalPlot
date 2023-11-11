@@ -109,7 +109,7 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
     double dB_max = *max_element(dB.begin(), dB.end());
     double dB_min = *min_element(dB.begin(), dB.end());
     plot->xAxis->setRange(ff_min - 100 + scale,ff_max + 100 - scale);
-    plot->yAxis->setRange(-50 - scale, 2500 + scale);
+    plot->yAxis->setRange(-50 - scale, 750 + scale);
 
     plot->graph(0)->setData(ff, dB);
 
@@ -123,15 +123,15 @@ void MainWindow::update_time_graph(QVector<double> in){
     double amp_max = *max_element(in.begin(), in.end());
     double amp_min = *min_element(in.begin(), in.end());
     double avg = (amp_max + amp_min) /2;
-    double time_max = in.size() * (1/samp_freq) * 150;
+    double time_max = in.size() * (1/samp_freq) * 100;
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(-250, 250);
+    plot_time->yAxis->setRange(-25, +25);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
-            time.append(i * (1/samp_freq) * 150);
+            time.append(i * (1/samp_freq) * 100);
         }
     }
 
@@ -281,7 +281,7 @@ void MainWindow::Input_dialog(){
     for(int x = 0; x < points * 2; x++) i.append(0);
 
     double d = QInputDialog::getDouble(this, tr("Generating signal"),
-                                   tr("samp_rate:"), 4410, -128000, 128000, 1, &ok);
+                                   tr("samp_rate:"), 5800, -128000, 128000, 1, &ok);
     //여기서 연결
     if (ok)
         samp_freq = d;

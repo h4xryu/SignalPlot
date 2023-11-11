@@ -60,7 +60,7 @@ public:
     QVector<double> dB;
     QVector<double> ff;
     double samp_freq;
-    int points = 8192;
+    int points = 4096;
 
     // 문자열 객체 선언
      QString str, str2, editStr;
