@@ -109,7 +109,7 @@ void MainWindow::update_graph(QVector<double>ff, QVector<double> dB){
     double dB_max = *max_element(dB.begin(), dB.end());
     double dB_min = *min_element(dB.begin(), dB.end());
     plot->xAxis->setRange(ff_min - 100 + scale,ff_max + 100 - scale);
-    plot->yAxis->setRange(-50 - scale, 1500 + scale);
+    plot->yAxis->setRange(-50 - scale, 2500 + scale);
 
     plot->graph(0)->setData(ff, dB);
 
@@ -127,7 +127,7 @@ void MainWindow::update_time_graph(QVector<double> in){
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(-25, 25);
+    plot_time->yAxis->setRange(-250, 250);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {

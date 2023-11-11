@@ -130,7 +130,16 @@ public:
                                 double amp_max = *std::max_element(in.begin(), in.end());
                                 double amp_min = *std::min_element(in.begin(), in.end());
                                 avg = (amp_max + amp_min) / 2;
-                                for(int i = 0; i < in.size(); i++) in[i] = (in[i] - avg);
+                                for(int i = 0; i < in.size(); i++) {
+                                    if (in[i] > (avg/2)){
+
+                                       in[i] = (in[i] - avg);
+                                       //std::cout << in[i] << std::endl;
+                                    } else {
+                                        in[i] = in[i];
+                                        //std::cout << "case2 : " << in[i] << std::endl;
+                                    }
+                                };
                                 emit send_in(in);
                                 emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
 
@@ -146,7 +155,7 @@ public:
 
                             if (buffer[i] == char(0x03) && stx){
                                 //std::cout << stoi(tmp);
-                                try{in.append(stoi(tmp)/10);} //except
+                                try{in.append(stoi(tmp));} //except
                                 catch(const std::invalid_argument& e){}
                                 stx = false;
                                 tmp.clear();
