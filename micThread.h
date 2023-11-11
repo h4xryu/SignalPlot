@@ -94,8 +94,8 @@ public:
             tty.c_cc[VTIME] = 0;
             tty.c_cc[VMIN] = 0;
 
-            cfsetispeed(&tty, B115200);
-            cfsetospeed(&tty, B115200);
+            cfsetispeed(&tty, B230400);
+            cfsetospeed(&tty, B230400);
 
             if (tcsetattr(fd, TCSANOW, &tty) != 0) {
                 fprintf(stderr, "tcgetattr(%s): %s\n", device, strerror(errno));
@@ -109,65 +109,70 @@ public:
             bool isfull = false;
             bool breakPoint = false;
 
+            try{
+                while(!chk) chk_trig(0);
+                if(chk & !w_chk){ while(1){
+                    ssize_t num_bytes = read(fd, &buffer, sizeof(buffer));
 
-            while(!chk) chk_trig(0);
-            if(chk & !w_chk){ while(1){
-                ssize_t num_bytes = read(fd, &buffer, sizeof(buffer));
-
-                if (num_bytes == -1) {
-                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                        continue;
-                    }
-                    fprintf(stderr, "read(%s): %s\n", device, strerror(errno));
-                    break;
-                }
-
-                if (num_bytes > 0) {
-                    for (ssize_t i = 0; i < num_bytes; ++i) {
-
-                        while(!s_chk) chk_sendFlag(0);
-                        if (in.size() >= 425){
-                            double amp_max = *std::max_element(in.begin(), in.end());
-                            double amp_min = *std::min_element(in.begin(), in.end());
-                            avg = (amp_max + amp_min) / 2;
-                            for(int i = 0; i < in.size(); i++) in[i] = (in[i] - avg);
-                            emit send_in(in);
-                            emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
-
-                            in.clear();
-                            s_chk = 0;
-                        }
-
-                        if (buffer[i] == char(0x02)){
-                            stx = true;
-                            continue;
-
-                        }
-
-                        if (buffer[i] == char(0x03) && stx){
-                            //std::cout << stoi(tmp);
-                            try{in.append(stoi(tmp)/10);} //except
-                            catch(const std::invalid_argument& e){}
-                            stx = false;
-                            tmp.clear();
-                            isfull = false;
-                            continue;
-                            }
-                        if (stx && isprint(buffer[i])) {
-                            unsigned char ttmp;
-                            ttmp = buffer[i];
-                            tmp += ttmp;
+                    if (num_bytes == -1) {
+                        if (errno == EAGAIN || errno == EWOULDBLOCK) {
                             continue;
                         }
-
-                    }
-
-                    if(breakPoint){
+                        fprintf(stderr, "read(%s): %s\n", device, strerror(errno));
                         break;
                     }
+
+                    if (num_bytes > 0) {
+                        for (ssize_t i = 0; i < num_bytes; ++i) {
+
+                            while(!s_chk) chk_sendFlag(0);
+                            if (in.size() >= 400 && !(in.size() <= 10)){
+                                double amp_max = *std::max_element(in.begin(), in.end());
+                                double amp_min = *std::min_element(in.begin(), in.end());
+                                avg = (amp_max + amp_min) / 2;
+                                for(int i = 0; i < in.size(); i++) in[i] = (in[i] - avg);
+                                emit send_in(in);
+                                emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
+
+                                in.clear();
+                                s_chk = 0;
+                            }
+
+                            if (buffer[i] == char(0x02)){
+                                stx = true;
+                                continue;
+
+                            }
+
+                            if (buffer[i] == char(0x03) && stx){
+                                //std::cout << stoi(tmp);
+                                try{in.append(stoi(tmp)/10);} //except
+                                catch(const std::invalid_argument& e){}
+                                stx = false;
+                                tmp.clear();
+                                isfull = false;
+                                continue;
+                                }
+                            if (stx && isprint(buffer[i])) {
+                                unsigned char ttmp;
+                                ttmp = buffer[i];
+                                tmp += ttmp;
+                                continue;
+                            }
+
+                        }
+
+                        if(breakPoint){
+                            break;
+                        }
+                    }
                 }
+        }
+            }//try block endpoint
+            catch (std::out_of_range& e){
+
             }
-    }}
+    }
 
 
 
@@ -193,17 +198,17 @@ public slots:
 
     void chk_trig(bool a){
         if(a){
-            std::cout << "checked";
+
             chk = 1;
         }
     }
     void wait_on(){
         w_chk = 1;
-        std::cout << "wait_on"<< std::endl;
+
     }
     void wait_off(){
         w_chk = 0;
-        std::cout << "wait_off"<< std::endl;
+
     }
 
     bool chk_sendFlag(bool a){
