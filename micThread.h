@@ -126,7 +126,7 @@ public:
                         for (ssize_t i = 0; i < num_bytes; ++i) {
 
                             while(!s_chk) chk_sendFlag(0);
-                            if (in.size() >= 400 && !(in.size() <= 10)){
+                            if (in.size() >= 300 && !(in.size() <= 10)){
                                 double amp_max = *std::max_element(in.begin(), in.end());
                                 double amp_min = *std::min_element(in.begin(), in.end());
                                 avg = (amp_max + amp_min) / 2;

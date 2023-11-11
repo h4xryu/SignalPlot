@@ -123,15 +123,15 @@ void MainWindow::update_time_graph(QVector<double> in){
     double amp_max = *max_element(in.begin(), in.end());
     double amp_min = *min_element(in.begin(), in.end());
     double avg = (amp_max + amp_min) /2;
-    double time_max = in.size() * (1/samp_freq) * 200;
+    double time_max = in.size() * (1/samp_freq) * 150;
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
-    plot_time->yAxis->setRange(-100, 100);
+    plot_time->yAxis->setRange(-25, 25);
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
-            time.append(i * (1/samp_freq) * 200);
+            time.append(i * (1/samp_freq) * 150);
         }
     }
 
