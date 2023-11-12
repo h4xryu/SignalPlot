@@ -123,7 +123,7 @@ void MainWindow::update_time_graph(QVector<double> in){
     double amp_max = *max_element(in.begin(), in.end());
     double amp_min = *min_element(in.begin(), in.end());
     double avg = (amp_max + amp_min) /2;
-    double time_max = in.size() * (1/samp_freq) * 100;
+    double time_max = in.size() * (1/samp_freq) * 256; //46.4us * 256 = 11.6ms
 
     QVector<double> time;
     plot_time->xAxis->setRange(0,time_max);
@@ -131,7 +131,7 @@ void MainWindow::update_time_graph(QVector<double> in){
 
     if (time.size() == 0) {
         for(int i = 0; i < in.size(); i++) {
-            time.append(i * (1/samp_freq) * 100);
+            time.append(i * (1/samp_freq) * 256);
         }
     }
 
@@ -180,21 +180,6 @@ void MainWindow::Plot_FFT(QVector<double> in){
     plot_time->setBackground(QColor(0,0,0,0));
 
 
-    /*// "정지" 아이콘 설정
-    const QIcon stop = QIcon::fromTheme("start", QIcon(""));
-    // 정지 객체 생성
-    QAction *pSlotfgColor = new QAction(stop, tr("&Graph stop"), this);
-    connect(pSlotfgColor, SIGNAL(triggered()), this, SLOT(Input_dialog()));
-    // 메뉴바에 "그래프 시작 추가
-    pGraphMenu->addAction(pSlotfgColor);
-    // 툴바에 색상 아이콘 추가
-    GraphToolBar->addAction(pSlotfgColor);
-    // 상태바을 연결시킨다.
-    pStartusbar = statusBar();*/
-
-    // 데이터 받아와서 버퍼에 저장하는 개념
-
-    //데이터를 보냈는지 확인
     emit set_sendFlag(1);
     while (!is_sendfin()){
 
@@ -244,12 +229,6 @@ void MainWindow::Plot_FFT(QVector<double> in){
 
 
     tmp_out = FFT_vec(tmp_in);
-//    for(int i = (points/2)-1; i< (points)-2; i++){
-//        tmp_dB.append(20*log(sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag())));
-//    }
-//    for(int i = 0; i<= ((points/2)-1); i++){
-//        tmp_dB.append(20*log(sqrt(tmp_out[i].real()*tmp_out[i].real() + tmp_out[i].imag()*tmp_out[i].imag())));
-//    }
 
     for(int i = (points/2)-1; i< (points)-2; i++){
         tmp_dB.append((0.5)*sqrt(tmp_out[(points)-1-i].real()*tmp_out[(points)-1-i].real() + tmp_out[(points)-1-i].imag()*tmp_out[(points)-1-i].imag()*(1-cos(2*PI*((points)-1-i))/(points-1))));
@@ -280,8 +259,8 @@ void MainWindow::Input_dialog(){
 
     for(int x = 0; x < points * 2; x++) i.append(0);
 
-    double d = QInputDialog::getDouble(this, tr("Generating signal"),
-                                   tr("samp_rate:"), 5800, -128000, 128000, 1, &ok);
+    double d = QInputDialog::getDouble(this, tr("Set sampling rate."),
+                                   tr("samp_rate:"), 22000, -128000, 128000, 1, &ok);
     //여기서 연결
     if (ok)
         samp_freq = d;

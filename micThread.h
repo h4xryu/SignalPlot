@@ -30,6 +30,7 @@ public:
     QVector<double> in;
     char* device = nullptr;
     int avg = 0;
+    std::string password = "20181657";
 
     void run() override{
 
@@ -37,7 +38,7 @@ public:
     }
 
     int connect_serial(){
-        unsigned char buffer[1000];
+        char buffer[512];
         std::cout << "Waiting for device..."<< std::endl;
 
         while(!chk_dinfo) chk_gotdev(0);
@@ -50,7 +51,7 @@ public:
 
         }
         std::string str = device;
-        std::system(("echo \"20181657\" | sudo -S chmod 777 "+str+"").c_str());
+        std::system(("echo "+password+" | sudo -S chmod 777 "+str+"").c_str());
 
 
         int fd = open(device, O_RDWR | O_NOCTTY | O_NDELAY);
@@ -96,6 +97,8 @@ public:
 
             cfsetispeed(&tty, B230400);
             cfsetospeed(&tty, B230400);
+            //tty.c_ispeed = 250000;
+            //tty.c_ospeed = 250000; //if you set UBRR0 as 8
 
             if (tcsetattr(fd, TCSANOW, &tty) != 0) {
                 fprintf(stderr, "tcgetattr(%s): %s\n", device, strerror(errno));
@@ -103,7 +106,7 @@ public:
             }
 
             std::vector<double> dataBuff;
-            std::string tmp;
+            int tmp;
             bool stx = false;
             bool breakPoint = false;
 
@@ -124,50 +127,31 @@ public:
                         for (ssize_t i = 0; i < num_bytes; ++i) {
 
                             while(!s_chk) chk_sendFlag(0);
-                            if (in.size() >= 200){
-                                int amp_max = *std::max_element(in.begin(), in.end()); //정수형으로 해야지 오버플로우 안남
+
+                            tmp = (int)buffer[i];
+                            std::cout << tmp << std::endl;
+                            in.append(tmp);
+                            if (in.size() >= 256){
+                                int amp_max = *std::max_element(in.begin(), in.end());
                                 int amp_min = *std::min_element(in.begin(), in.end());
                                 avg = (amp_max + amp_min) / 2;
 
                                 for(int i = 0; i < in.size(); i++) {
-                                    in[i] = ((in[i] - avg)/10); //오버플로우 방지를 위해서 10곱했다가 10나눠줌
-                                    std::cout << "debug : " << in[i] << " avg : " << avg/10 << std::endl;
+                                    in[i] = ((in[i] - avg));
+                                    //std::cout << "debug : " << in[i] << " avg : " << avg/10 << std::endl;
                                 };
                                 emit send_in(in);
-                                emit fin_send(); // 조건문 걸고 받았다는 신호 받았다는 거 확인할 때 실행.
+                                emit fin_send(); // sending check
 
                                 in.clear();
                                 s_chk = 0;
                             }
 
-                            if (buffer[i] == char(0x02)){
-                                stx = true;
-                                continue;
-
-                            }
-
-                            if (buffer[i] == char(0x03) && stx){
-                                //std::cout << stoi(tmp);
-                                try{
-                                    if (stoi(tmp) < 200)in.append(stoi(tmp)*10); //이상한 값 들어오는 거 방지
-                                } //except
-                                catch(const std::invalid_argument& e){}
-                                stx = false;
-                                tmp.clear();
-                                continue;
-                                }
-                            if (stx && isprint(buffer[i])) {
-                                unsigned char ttmp;
-                                ttmp = buffer[i];
-                                tmp += ttmp;
-                                continue;
-                            }
 
                         }
 
-                        if(breakPoint){
-                            break;
-                        }
+
+//                        }
                     }
                 }
         }
