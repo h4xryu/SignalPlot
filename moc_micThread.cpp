@@ -24,7 +24,7 @@ QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_MicThread_t {
     QByteArrayData data[21];
-    char stringdata0[169];
+    char stringdata0[159];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -45,22 +45,22 @@ QT_MOC_LITERAL(8, 59, 1), // "s"
 QT_MOC_LITERAL(9, 61, 8), // "fin_send"
 QT_MOC_LITERAL(10, 70, 4), // "send"
 QT_MOC_LITERAL(11, 75, 7), // "results"
-QT_MOC_LITERAL(12, 83, 14), // "connect_serial"
-QT_MOC_LITERAL(13, 98, 13), // "getDeviceInfo"
-QT_MOC_LITERAL(14, 112, 11), // "const char*"
-QT_MOC_LITERAL(15, 124, 3), // "dev"
-QT_MOC_LITERAL(16, 128, 8), // "chk_trig"
-QT_MOC_LITERAL(17, 137, 1), // "a"
-QT_MOC_LITERAL(18, 139, 7), // "wait_on"
-QT_MOC_LITERAL(19, 147, 8), // "wait_off"
-QT_MOC_LITERAL(20, 156, 12) // "chk_sendFlag"
+QT_MOC_LITERAL(12, 83, 13), // "getDeviceInfo"
+QT_MOC_LITERAL(13, 97, 5), // "char*"
+QT_MOC_LITERAL(14, 103, 3), // "dev"
+QT_MOC_LITERAL(15, 107, 10), // "chk_gotdev"
+QT_MOC_LITERAL(16, 118, 1), // "a"
+QT_MOC_LITERAL(17, 120, 8), // "chk_trig"
+QT_MOC_LITERAL(18, 129, 7), // "wait_on"
+QT_MOC_LITERAL(19, 137, 8), // "wait_off"
+QT_MOC_LITERAL(20, 146, 12) // "chk_sendFlag"
 
     },
     "MicThread\0send_in\0\0QVector<double>\0"
     "in\0send_f\0f\0resultReady\0s\0fin_send\0"
-    "send\0results\0connect_serial\0getDeviceInfo\0"
-    "const char*\0dev\0chk_trig\0a\0wait_on\0"
-    "wait_off\0chk_sendFlag"
+    "send\0results\0getDeviceInfo\0char*\0dev\0"
+    "chk_gotdev\0a\0chk_trig\0wait_on\0wait_off\0"
+    "chk_sendFlag"
 };
 #undef QT_MOC_LITERAL
 
@@ -75,7 +75,7 @@ static const uint qt_meta_data_MicThread[] = {
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       6,       // signalCount
+       5,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
        1,    1,   69,    2, 0x06 /* Public */,
@@ -83,14 +83,14 @@ static const uint qt_meta_data_MicThread[] = {
        7,    1,   75,    2, 0x06 /* Public */,
        9,    0,   78,    2, 0x06 /* Public */,
       10,    1,   79,    2, 0x06 /* Public */,
-      12,    0,   82,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-      13,    1,   83,    2, 0x0a /* Public */,
-      16,    1,   86,    2, 0x0a /* Public */,
-      18,    0,   89,    2, 0x0a /* Public */,
-      19,    0,   90,    2, 0x0a /* Public */,
-      20,    0,   91,    2, 0x0a /* Public */,
+      12,    1,   82,    2, 0x0a /* Public */,
+      15,    1,   85,    2, 0x0a /* Public */,
+      17,    1,   88,    2, 0x0a /* Public */,
+      18,    0,   91,    2, 0x0a /* Public */,
+      19,    0,   92,    2, 0x0a /* Public */,
+      20,    1,   93,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void, 0x80000000 | 3,    4,
@@ -98,14 +98,14 @@ static const uint qt_meta_data_MicThread[] = {
     QMetaType::Void, QMetaType::QString,    8,
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 3,   11,
-    QMetaType::Int,
 
  // slots: parameters
-    QMetaType::Void, 0x80000000 | 14,   15,
-    QMetaType::Void, QMetaType::Bool,   17,
+    QMetaType::Void, 0x80000000 | 13,   14,
+    QMetaType::Void, QMetaType::Bool,   16,
+    QMetaType::Void, QMetaType::Bool,   16,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Bool,
+    QMetaType::Bool, QMetaType::Bool,   16,
 
        0        // eod
 };
@@ -121,13 +121,12 @@ void MicThread::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, v
         case 2: _t->resultReady((*reinterpret_cast< const QString(*)>(_a[1]))); break;
         case 3: _t->fin_send(); break;
         case 4: _t->send((*reinterpret_cast< QVector<double>(*)>(_a[1]))); break;
-        case 5: { int _r = _t->connect_serial();
-            if (_a[0]) *reinterpret_cast< int*>(_a[0]) = std::move(_r); }  break;
-        case 6: _t->getDeviceInfo((*reinterpret_cast< const char*(*)>(_a[1]))); break;
+        case 5: _t->getDeviceInfo((*reinterpret_cast< char*(*)>(_a[1]))); break;
+        case 6: _t->chk_gotdev((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 7: _t->chk_trig((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 8: _t->wait_on(); break;
         case 9: _t->wait_off(); break;
-        case 10: { bool _r = _t->chk_sendFlag();
+        case 10: { bool _r = _t->chk_sendFlag((*reinterpret_cast< bool(*)>(_a[1])));
             if (_a[0]) *reinterpret_cast< bool*>(_a[0]) = std::move(_r); }  break;
         default: ;
         }
@@ -183,13 +182,6 @@ void MicThread::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, v
             using _t = void (MicThread::*)(QVector<double> );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&MicThread::send)) {
                 *result = 4;
-                return;
-            }
-        }
-        {
-            using _t = int (MicThread::*)();
-            if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&MicThread::connect_serial)) {
-                *result = 5;
                 return;
             }
         }
@@ -268,15 +260,6 @@ void MicThread::send(QVector<double> _t1)
 {
     void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 4, _a);
-}
-
-// SIGNAL 5
-int MicThread::connect_serial()
-{
-    int _t0{};
-    void *_a[] = { const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t0))) };
-    QMetaObject::activate(this, &staticMetaObject, 5, _a);
-    return _t0;
 }
 QT_WARNING_POP
 QT_END_MOC_NAMESPACE

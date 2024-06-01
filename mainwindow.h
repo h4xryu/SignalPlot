@@ -17,6 +17,9 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <micThread.h>
 
+
+
+
 const double PI = acos(-1);
 typedef std::complex<double> cpx;
 
@@ -34,6 +37,7 @@ public:
 
     QCustomPlot *plot;
     QCustomPlot *plot_time;
+    QCustomPlot *plot_ifft;
     // x축 y축 벡터 정의
     QVector<double> vec_x,vec_y;
     QVector<double> mul_x;
@@ -54,13 +58,15 @@ public:
     void FFT(QVector<cpx> &v, cpx w);
     QVector<cpx> DFT_vec(QVector<double> &v);
     QVector<cpx> FFT_vec(QVector<double> &v);
+    void IFFT(QVector<cpx> &v, cpx w);
+    QVector<cpx> IFFT_vec(QVector<cpx> &v);
     QTimer *timer;
     QVector<double> in;
     QVector<cpx> out;
     QVector<double> dB;
     QVector<double> ff;
     double samp_freq;
-    int points = 4096;
+    int points = 2048;
 
     // 문자열 객체 선언
      QString str, str2, editStr;
@@ -106,7 +112,7 @@ public:
      void generate_triwave(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
      void generate_step_func(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
      void generate_reLU_func(QVector<double> &in, QVector<double> &ff, int points, double samp_freq);
-
+     void on_btnRefresh_clicked();
 
      QString portName;
      QByteArray ba;
@@ -121,7 +127,8 @@ signals:
 
 private:
     Ui::MainWindow *ui;
-
+    bool hanning_active = false;
+    bool hamming_active = false;
     void fillPortsInfo();
     QSerialPort* m_serialPort = nullptr;
 
@@ -153,7 +160,7 @@ public slots:
      void Plot_FFT(QVector<double> i);
      //void Plot_Wave(double samp_freq, int points);
      void Input_dialog();
-
+     void showPointToolTip(QMouseEvent *event);
      void get_i(double i){
          std::cout << i ;
          in.append(i);
@@ -163,6 +170,8 @@ public slots:
      }
      void update_graph(QVector<double>ff, QVector<double> dB);
      void update_time_graph(QVector<double>in);
+     QVector<cpx> ifft(const QVector<cpx> &inputs);
+     void update_ifft_graph(QVector<cpx>in);
      bool is_sendfin(){
          return 1;
      };
@@ -170,7 +179,7 @@ public slots:
      //시리얼 관련
      int readData();
      void handleError(QSerialPort::SerialPortError error);
-     void on_btnConnect_clicked();
+     void on_btnConnect_clicked(char newParameter = 'Password required');
      void on_btnDisConnect_clicked();
 
 
@@ -183,5 +192,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     // 페인트 이벤트 함수 선언
     void paintEvent(QPaintEvent *event);
+private slots:
+    void on_apply_clicked();
 };
 #endif // MAINWINDOW_H

@@ -3,18 +3,10 @@ serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport serialport
 
-TARGET = qcustomplot
 TEMPLATE += app
 
 CONFIG += c++11 \
 serialport
-
-PKGCONFIG += opencv4
-INCLUDEPATH += /usr/include/opencv4 \
-/home/qtgraph/eigen3 \
-
-
-LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_imgcodecs
 
 
 

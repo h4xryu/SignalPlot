@@ -3990,7 +3990,7 @@ protected:
   QCP::SelectionRectMode mSelectionRectMode;
   QCPSelectionRect *mSelectionRect;
   bool mOpenGl;
-  
+  void showPointToolTip(QMouseEvent *event);
   // non-property members:
   QList<QSharedPointer<QCPAbstractPaintBuffer> > mPaintBuffers;
   QPoint mMousePressPos;

@@ -23,22 +23,45 @@ class MicThread : public QThread
 public:
     bool chk_dinfo = 0;
     double ff;
-    double a;
+    unsigned int a = 0;
+    unsigned int cnt = 0;
     bool chk = 0;
     bool w_chk = 0;
     bool s_chk = 0;
     QVector<double> in;
     char* device = nullptr;
-    int avg = 0;
+    unsigned char avg = 0;
     std::string password = "20181657";
 
     void run() override{
 
         connect_serial();
+
+//        while(!chk) chk_trig(0);
+
+//        if(chk & !w_chk){while(1){
+
+//            in.append(a);
+//            if(cnt % 10 == 0)a ^= 1;
+//            else a = 1;
+//            cnt++;
+//            if(cnt == 100) {
+//                cnt = 0;
+//                emit send_in(in);
+//                in.clear();
+//                emit fin_send(); // sending check
+//            }
+
+
+//            usleep(2000);
+//        }
+//        }
+
+
     }
 
     int connect_serial(){
-        char buffer[512];
+        char buffer[1024];
         std::cout << "Waiting for device..."<< std::endl;
 
         while(!chk_dinfo) chk_gotdev(0);
@@ -95,10 +118,10 @@ public:
             tty.c_cc[VTIME] = 0;
             tty.c_cc[VMIN] = 0;
 
-            cfsetispeed(&tty, B230400);
-            cfsetospeed(&tty, B230400);
-            //tty.c_ispeed = 250000;
-            //tty.c_ospeed = 250000; //if you set UBRR0 as 8
+            cfsetispeed(&tty, B115200);
+            cfsetospeed(&tty, B115200);
+       //     tty.c_ispeed = 250000;
+         //   tty.c_ospeed = 250000; //if you set UBRR0 as 8
 
             if (tcsetattr(fd, TCSANOW, &tty) != 0) {
                 fprintf(stderr, "tcgetattr(%s): %s\n", device, strerror(errno));
@@ -106,7 +129,7 @@ public:
             }
 
             std::vector<double> dataBuff;
-            int tmp;
+            char tmp;
             bool stx = false;
             bool breakPoint = false;
 
@@ -128,12 +151,12 @@ public:
 
                             while(!s_chk) chk_sendFlag(0);
 
-                            tmp = (int)buffer[i];
-                            std::cout << tmp << std::endl;
-                            in.append(tmp);
-                            if (in.size() >= 256){
-                                int amp_max = *std::max_element(in.begin(), in.end());
-                                int amp_min = *std::min_element(in.begin(), in.end());
+                            tmp = buffer[i];
+                            //std::cout << (int)tmp << std::endl;
+                            in.append((unsigned char)tmp);
+                            if (in.size() >= 500){
+                                unsigned char amp_max = *std::max_element(in.begin(), in.end());
+                                unsigned char amp_min = *std::min_element(in.begin(), in.end());
                                 avg = (amp_max + amp_min) / 2;
 
                                 for(int i = 0; i < in.size(); i++) {
